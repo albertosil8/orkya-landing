@@ -259,6 +259,39 @@ footer .logo{height:24px}
   .f-grid{grid-template-columns:1fr}
 }
 
+/* v3: buscador grande, estilo Booking */
+.buscador{padding-block:2.25rem 1.5rem}
+.buscador h1{font-size:clamp(2rem,4.5vw,2.8rem)}
+.buscador .intro{margin:.4rem 0 1.1rem;font-size:1.1rem}
+.caja-busqueda{display:grid;gap:.6rem;background:var(--fondo-alt);border:1px solid var(--linea);border-radius:8px;padding:.75rem}
+.campo-g{position:relative;background:var(--tarjeta);border:2px solid var(--linea);border-radius:6px;padding:.55rem .9rem .5rem;display:grid;gap:.15rem;min-width:0}
+.campo-g:focus-within{border-color:var(--petroleo)}
+.campo-g > label,.campo-g > .lbl{font-size:.85rem;color:var(--texto-suave);font-weight:500}
+.campo-g select{appearance:none;-webkit-appearance:none;width:100%;border:0;background:transparent;padding:0 1.6rem 0 0;font-size:1.2rem;font-weight:500;min-height:2rem;cursor:pointer}
+.campo-g select:focus{outline:none}
+.campo-g::after{content:"";position:absolute;right:1rem;top:50%;width:.55rem;height:.55rem;border-right:2px solid var(--texto-suave);border-bottom:2px solid var(--texto-suave);transform:translateY(-70%) rotate(45deg);pointer-events:none}
+#campo-procs::after{display:none}
+.campo-g .sel-procs{border:0;background:transparent;padding:0;min-height:2rem;gap:.4rem;cursor:pointer}
+.campo-g .sel-procs .vacio{font-size:1.2rem;font-weight:500;color:var(--texto);padding:0}
+.campo-g .pchip{font-size:1.02rem}
+.campo-g .abrir-procs{padding:.25rem .8rem;font-size:.95rem}
+.campo-g .lista-procs{margin-top:.6rem;grid-column:1 / -1}
+.mas{border-top:1px solid var(--linea);padding-top:.5rem}
+.mas summary{cursor:pointer;color:var(--petroleo);font-weight:600;width:max-content;padding:.25rem 0}
+.mas .f-grid{margin-top:.6rem}
+.mas .texto-libre{margin-top:1rem;padding-top:.9rem;border-top:1px dashed var(--linea)}
+.mas .texto-libre > label{display:block;font-weight:600;color:var(--texto);margin-bottom:.5rem}
+.mas .texto-libre .caja{display:flex;gap:.6rem;align-items:stretch}
+.mas .texto-libre textarea{flex:1;min-width:0;resize:vertical;border:1px solid var(--linea);background:var(--tarjeta);border-radius:4px;padding:.6rem .8rem}
+.btn-buscar{width:100%;font-size:1.2rem;padding:1rem}
+.presets{margin-top:.9rem}
+.buscador .limpiar{display:block;margin-top:.5rem;font-size:.9rem}
+.resultados{padding-block:2.25rem 3rem}
+@media (max-width:820px){
+  .mas .texto-libre .caja{flex-direction:column}
+  .campo-g .lista-procs{grid-template-columns:1fr}
+}
+
 </style>
 </head>
 <body>
@@ -269,55 +302,55 @@ footer .logo{height:24px}
     <nav aria-label="Principal"><a href="https://www.orkya.es/">Volver a orkya.es</a></nav>
   </div>
 </header>
-<div class="aviso" role="note"><div class="wrap"><p><b>Esto es una demostración.</b> Las empresas que aparecen son ejemplos inventados para enseñar cómo funcionará Orkya. Cualquier parecido con empresas reales es casual.</p></div></div>
 
 <main>
   <div id="vista-busqueda">
     <section class="buscador" aria-labelledby="t-buscar">
       <div class="wrap">
-        <h1 id="t-buscar">Encuentra quién te lo fabrica</h1>
-        <p class="intro">Elige el proceso, el material y dónde lo necesitas. Los resultados cambian al momento.</p>
+        <h1 id="t-buscar">¿Qué necesitas fabricar?</h1>
+        <p class="intro">Elige proceso, material y provincia.</p>
 
-        <div class="filtros" role="search" aria-label="Filtros de búsqueda">
-          <div class="f-cab"><h2>Qué necesitas</h2><button type="button" class="limpiar" id="limpiar">Limpiar filtros</button></div>
-          <div class="f-grid">
-            <div class="campo ancho">
-              <span class="lbl" id="lbl-procs">Procesos</span>
-              <div class="sel-procs" id="sel-procs" role="group" aria-labelledby="lbl-procs">
-                <span id="chips-procs" style="display:contents"></span>
-                <button type="button" class="abrir-procs" id="abrir-procs" aria-expanded="false" aria-controls="lista-procs">Añadir proceso</button>
-              </div>
-              <div class="lista-procs" id="lista-procs" hidden></div>
+        <form class="caja-busqueda" id="form-busqueda" role="search" aria-label="Buscar empresas">
+          <div class="campo-g" id="campo-procs">
+            <span class="lbl" id="lbl-procs">Proceso</span>
+            <div class="sel-procs" id="sel-procs" role="group" aria-labelledby="lbl-procs">
+              <span id="chips-procs" style="display:contents"></span>
+              <button type="button" class="abrir-procs" id="abrir-procs" aria-expanded="false" aria-controls="lista-procs">Elegir</button>
             </div>
-            <div class="campo"><label for="f-mat">Material</label><select id="f-mat"></select></div>
-            <div class="campo" id="campo-esp" hidden><label for="f-esp">Espesor de chapa (mm)</label><input type="number" id="f-esp" min="0" step="0.5" inputmode="decimal" placeholder="Por ejemplo, 3"></div>
-            <div class="campo" id="campo-diam" hidden><label for="f-diam">Diámetro de la pieza (mm)</label><input type="number" id="f-diam" min="0" step="1" inputmode="decimal" placeholder="Por ejemplo, 200"></div>
-            <div class="campo"><label for="f-cant">Cantidad (unidades)</label><select id="f-cant"></select></div>
-            <div class="campo"><label for="f-prov">Provincia</label><select id="f-prov"></select></div>
-            <div class="campo"><span class="lbl">Lugar de trabajo</span><label class="check-campo"><input type="checkbox" id="f-insitu"> Que trabaje en mis instalaciones</label></div>
+            <div class="lista-procs" id="lista-procs" hidden></div>
           </div>
+          <div class="campo-g"><label for="f-mat">Material</label><select id="f-mat"></select></div>
+          <div class="campo-g"><label for="f-prov">Provincia</label><select id="f-prov"></select></div>
 
-          <div class="ejemplos presets f-pie" id="presets"><span>Ejemplos:</span></div>
-
-          <details class="texto-libre" id="texto-libre">
-            <summary>O descríbelo con tus palabras <span class="beta">en pruebas</span></summary>
-            <form class="caja" id="form-texto">
-              <label class="sr" for="q">Describe lo que necesitas</label>
-              <textarea id="q" rows="2" placeholder="Por ejemplo: engranajes de acero inoxidable en Valencia"></textarea>
-              <button class="btn btn-prim" type="submit">Rellenar filtros</button>
-            </form>
-            <div class="ejemplos" id="ejemplos"><span>Prueba con:</span></div>
-            <p class="entendido" id="entendido" aria-live="polite"></p>
+          <details class="mas" id="mas">
+            <summary>Más opciones</summary>
+            <div class="f-grid">
+              <div class="campo"><label for="f-cant">Cantidad (unidades)</label><select id="f-cant"></select></div>
+              <div class="campo" id="campo-esp" hidden><label for="f-esp">Espesor de chapa (mm)</label><input type="number" id="f-esp" min="0" step="0.5" inputmode="decimal" placeholder="Por ejemplo, 3"></div>
+              <div class="campo" id="campo-diam" hidden><label for="f-diam">Diámetro de la pieza (mm)</label><input type="number" id="f-diam" min="0" step="1" inputmode="decimal" placeholder="Por ejemplo, 200"></div>
+              <div class="campo"><span class="lbl">Lugar de trabajo</span><label class="check-campo"><input type="checkbox" id="f-insitu"> Que trabaje en mis instalaciones</label></div>
+            </div>
+            <div class="texto-libre" id="texto-libre">
+              <label for="q">O descríbelo con tus palabras <span class="beta">en pruebas</span></label>
+              <div class="caja">
+                <textarea id="q" rows="2" placeholder="Por ejemplo: engranajes de acero inoxidable en Valencia"></textarea>
+                <button class="btn btn-sec" type="button" id="btn-texto">Rellenar filtros</button>
+              </div>
+              <div class="ejemplos" id="ejemplos"><span>Prueba con:</span></div>
+              <p class="entendido" id="entendido" aria-live="polite"></p>
+            </div>
           </details>
 
-          <button type="button" class="btn btn-prim ver-res" id="ver-res">Ver resultados</button>
-        </div>
+          <button class="btn btn-prim btn-buscar" type="submit" id="btn-buscar">Buscar</button>
+        </form>
+        <div class="ejemplos presets" id="presets"><span>Ejemplos:</span></div>
+        <button type="button" class="limpiar" id="limpiar">Limpiar filtros</button>
       </div>
     </section>
 
-    <section class="resultados" aria-labelledby="t-res">
+    <section class="resultados" id="resultados" aria-labelledby="t-res" hidden>
       <div class="wrap">
-        <div class="res-cab"><h2 id="t-res" tabindex="-1">Empresas</h2><p id="res-resumen" aria-live="polite"></p></div>
+        <div class="res-cab"><h2 id="t-res" tabindex="-1">Empresas que encajan</h2><p id="res-resumen" aria-live="polite"></p></div>
         <div id="res-cuerpo"></div>
       </div>
     </section>
@@ -813,6 +846,7 @@ footer .logo{height:24px}
     cp.innerHTML = q.procesos.length
       ? q.procesos.map(p => `<span class="pchip">${esc(nombreProc(p))}<button type="button" data-p="${p}" aria-label="Quitar ${esc(nombreProc(p))}">×</button></span>`).join('')
       : '<span class="vacio">Cualquier proceso</span>';
+    $('abrir-procs').textContent = $('lista-procs').hidden ? (q.procesos.length ? 'Cambiar' : 'Elegir') : 'Cerrar';
     $('lista-procs').querySelectorAll('input').forEach(i => { i.checked = q.procesos.includes(i.value); });
     $('f-mat').value = q.material || '';
     $('f-cant').value = q.cantidad || '';
@@ -869,7 +903,6 @@ footer .logo{height:24px}
   function pintarResultados(){
     const {lista, combo} = buscar(q);
     const cuerpo = $('res-cuerpo'), resumen = $('res-resumen');
-    $('ver-res').textContent = `Ver resultados (${lista.length})`;
     if (!hayReq(q)) {
       resumen.textContent = `${lista.length} empresas de ejemplo` + (q.prov ? `, de más cerca a más lejos de ${PROV[q.prov][0]}` : '') + '. Elige un proceso o un material para acotar.';
       cuerpo.innerHTML = `<ol class="lista">${lista.map(tarjeta).join('')}</ol>`;
@@ -894,8 +927,13 @@ footer .logo{height:24px}
   }
 
   function actualizar(){ pintarFiltros(); pintarResultados(); }
+  let buscado = false;
+  function lanzarBusqueda(bajar){
+    buscado = true; $('resultados').hidden = false; actualizar();
+    if (bajar) { $('t-res').scrollIntoView({behavior:'smooth', block:'start'}); $('t-res').focus({preventScroll:true}); }
+  }
   // Cambio hecho a mano en los filtros: deja de haber ejemplo activo y la explicación del texto ya no vale
-  function cambioManual(){ presetActivo = null; $('entendido').innerHTML = ''; actualizar(); }
+  function cambioManual(){ presetActivo = null; $('entendido').innerHTML = ''; pintarFiltros(); }
 
   function pintarEntendido(info){
     const partes = [];
@@ -917,14 +955,15 @@ footer .logo{height:24px}
     $('q').value = t;
     const r = interpretar(t);
     q = r.q; presetActivo = null;
-    actualizar();
+    pintarFiltros();
     pintarEntendido(r.info);
   }
 
   function aplicarPreset(i){
     q = Object.assign(vacio(), JSON.parse(JSON.stringify(PRESETS[i].q)));
     presetActivo = i; $('entendido').innerHTML = '';
-    actualizar();
+    $('mas').open = false;
+    lanzarBusqueda(true);
   }
 
   // ---------- Ficha ----------
@@ -1029,10 +1068,10 @@ footer .logo{height:24px}
   });
   const alternarLista = abrir => {
     const l = $('lista-procs'), a = abrir == null ? l.hidden : abrir;
-    l.hidden = !a; $('abrir-procs').setAttribute('aria-expanded', String(a)); $('abrir-procs').textContent = a ? 'Cerrar lista' : 'Añadir proceso';
+    l.hidden = !a; $('abrir-procs').setAttribute('aria-expanded', String(a)); $('abrir-procs').textContent = a ? 'Cerrar' : (q.procesos.length ? 'Cambiar' : 'Elegir');
   };
   $('abrir-procs').addEventListener('click', () => alternarLista());
-  $('sel-procs').addEventListener('click', ev => { if (ev.target === $('sel-procs') || ev.target.classList.contains('vacio')) alternarLista(true); });
+  $('sel-procs').addEventListener('click', ev => { if (ev.target === $('sel-procs') || ev.target.classList.contains('vacio') || ev.target.classList.contains('pchip')) alternarLista(true); });
   $('f-mat').addEventListener('change', ev => { q.material = ev.target.value || null; cambioManual(); });
   $('f-cant').addEventListener('change', ev => { q.cantidad = ev.target.value || null; cambioManual(); });
   $('f-prov').addEventListener('change', ev => { q.prov = ev.target.value || null; cambioManual(); });
@@ -1040,13 +1079,13 @@ footer .logo{height:24px}
   const leerNum = v => { const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) || n <= 0 ? null : n; };
   $('f-esp').addEventListener('input', ev => { q.espesor = leerNum(ev.target.value); cambioManual(); });
   $('f-diam').addEventListener('input', ev => { q.diametro = leerNum(ev.target.value); cambioManual(); });
-  $('limpiar').addEventListener('click', () => { q = vacio(); cambioManual(); });
-  $('ver-res').addEventListener('click', () => { $('t-res').scrollIntoView({behavior:'smooth', block:'start'}); $('t-res').focus({preventScroll:true}); });
+  $('limpiar').addEventListener('click', () => { q = vacio(); cambioManual(); if (buscado) pintarResultados(); });
+  $('form-busqueda').addEventListener('submit', ev => { ev.preventDefault(); lanzarBusqueda(true); });
 
   PRESETS.forEach((pr, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = pr.l; b.addEventListener('click', () => aplicarPreset(i)); $('presets').appendChild(b); });
   EJEMPLOS.forEach(t => { const b = document.createElement('button'); b.type = 'button'; b.textContent = t.length > 60 ? t.slice(0, 57).trim() + '…' : t; b.title = t; b.addEventListener('click', () => aplicarTexto(t)); $('ejemplos').appendChild(b); });
-  $('form-texto').addEventListener('submit', ev => { ev.preventDefault(); const t = $('q').value.trim(); if (t) aplicarTexto(t); });
-  $('q').addEventListener('keydown', ev => { if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); $('form-texto').requestSubmit(); } });
+  $('btn-texto').addEventListener('click', () => { const t = $('q').value.trim(); if (t) aplicarTexto(t); });
+  $('q').addEventListener('keydown', ev => { if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); $('btn-texto').click(); } });
   document.addEventListener('click', ev => {
     const a = ev.target.closest('a.abrir'); if (!a) return;
     ev.preventDefault(); scrollAntes = window.scrollY; location.hash = a.dataset.id;
@@ -1056,7 +1095,7 @@ footer .logo{height:24px}
   // Para probar desde fuera (sin efecto en la página)
   window.__orkya = {interpretar, buscar: qq => buscar(Object.assign(vacio(), qq))};
 
-  actualizar();
+  pintarFiltros();
   mostrar();
 })();
 
