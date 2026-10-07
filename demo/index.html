@@ -328,6 +328,18 @@ footer .logo{height:24px}
   .buscador .texto-libre .caja{flex-direction:column}
 }
 
+/* v6: materiales como pastillas; cabecera de Afinar con subtítulo */
+.campo-g .lbl small{font-weight:400;color:var(--texto-suave);font-size:.82rem}
+.pills{display:flex;flex-wrap:wrap;gap:.4rem;padding:.2rem 0 .1rem}
+.pill{border:1px solid var(--linea);background:var(--fondo-alt);color:var(--texto);border-radius:999px;padding:.38rem .9rem;font-size:1rem;cursor:pointer;line-height:1.2}
+.pill:hover{border-color:var(--petroleo)}
+.pill[aria-pressed="true"]{background:var(--petroleo);border-color:var(--petroleo);color:#fff;font-weight:600}
+.afinar-caja > summary > span{display:grid;gap:.1rem}
+.afinar-caja > summary small{font-family:"Barlow",sans-serif;font-weight:400;font-size:.82rem;color:var(--texto-suave)}
+@media (max-width:820px){
+  .pill{font-size:.95rem;padding:.35rem .75rem}
+}
+
 </style>
 </head>
 <body>
@@ -356,12 +368,8 @@ footer .logo{height:24px}
             <div class="lista-procs" id="lista-procs" hidden></div>
           </div>
           <div class="campo-g" id="campo-mat">
-            <span class="lbl" id="lbl-mat">Material</span>
-            <div class="sel-procs" id="sel-mat" role="group" aria-labelledby="lbl-mat">
-              <span id="chips-mat" style="display:contents"></span>
-              <button type="button" class="abrir-procs" id="abrir-mat" aria-expanded="false" aria-controls="lista-mat">Elegir</button>
-            </div>
-            <div class="lista-procs lista-mat" id="lista-mat" hidden></div>
+            <span class="lbl" id="lbl-mat">Material <small>(marca uno o varios)</small></span>
+            <div class="pills" id="pills-mat" role="group" aria-labelledby="lbl-mat"></div>
           </div>
           <div class="campo-g" id="campo-prov">
             <span class="lbl" id="lbl-prov">Provincia</span>
@@ -394,7 +402,7 @@ footer .logo{height:24px}
       <div class="wrap res-grid">
         <aside class="afinar" aria-labelledby="t-afinar">
           <details class="afinar-caja" id="afinar-caja" open>
-            <summary><span id="t-afinar">Afinar</span><button type="button" class="limpiar" id="af-limpiar">Quitar</button></summary>
+            <summary><span><span id="t-afinar">Afinar resultados</span><small>Cantidad, medidas, robot, certificaciones</small></span><button type="button" class="limpiar" id="af-limpiar">Quitar</button></summary>
             <div class="af-cuerpo">
               <div class="campo"><label for="af-cant">Cantidad (unidades)</label><input type="number" id="af-cant" min="1" step="1" inputmode="numeric" placeholder="Por ejemplo, 200"></div>
               <div id="af-params"></div>
@@ -476,6 +484,8 @@ footer .logo{height:24px}
   TIPOS_L.recto = 'Rectos'; TIPOS_L.helicoidal = 'Helicoidales';
 
   const PROC = {
+    torneado_conv:{l:'Torneado convencional', f:'Mecanizado', params:['diametro','longitud']},
+    fresado_conv:{l:'Fresado convencional', f:'Mecanizado', params:['dims']},
     torneado:{l:'Torneado CNC', f:'Mecanizado', params:['diametro','longitud']},
     fresado:{l:'Fresado CNC', f:'Mecanizado', params:['ejes','dims']},
     tallado:{l:'Tallado de engranajes', f:'Mecanizado', params:['diametro','modulo']},
@@ -507,13 +517,13 @@ footer .logo{height:24px}
   };
   // Opciones «me da igual la tecnología» dentro de una familia
   const GRUPOS = {
-    mecanizado:{l:'Mecanizado CNC (torneado o fresado)', corto:'Cualquier mecanizado CNC', f:'Mecanizado', ids:['torneado','fresado']},
+    mecanizado:{l:'Mecanizado (cualquier tipo)', corto:'Cualquier mecanizado', f:'Mecanizado', ids:['torneado_conv','fresado_conv','torneado','fresado']},
     corte:{l:'Corte de chapa (cualquier tecnología)', corto:'Cualquier corte de chapa', f:'Corte', ids:['corte_laser','corte_agua','plasma']},
     soldadura:{l:'Soldadura (cualquier tipo)', corto:'Cualquier soldadura', f:'Soldadura', ids:['tig','mig','sold_laser']},
     pintura:{l:'Pintura (polvo o líquida)', corto:'Cualquier pintura', f:'Pintura', ids:['pintura_polvo','pintura_liq']}
   };
   const FAMILIAS = [
-    {l:'Mecanizado', g:'mecanizado', ids:['torneado','fresado','tallado','rectificado','electroerosion']},
+    {l:'Mecanizado', g:'mecanizado', ids:['torneado_conv','fresado_conv','torneado','fresado','tallado','rectificado','electroerosion']},
     {l:'Corte', g:'corte', ids:['corte_laser','corte_tubo','corte_agua','plasma']},
     {l:'Conformado', ids:['plegado','curvado_tubo','cilindrado','punzonado','estampacion']},
     {l:'Soldadura', g:'soldadura', ids:['tig','mig','sold_laser']},
@@ -586,7 +596,8 @@ footer .logo{height:24px}
       {p:'cilindrado', mat:['carbono','inox'], esp:{carbono:12,inox:8}, long:2000, cant:['1-10','10-100'], maq:'Cilindradora de 3 rodillos'},
       {p:'mig', mat:['carbono'], robot:false, cant:['1-10','10-100']},
       {p:'tig', mat:['inox'], robot:false, cant:['1-10','10-100']},
-      {p:'calderia', mat:['carbono','inox'], peso:3000, cant:['1-10','10-100']}
+      {p:'calderia', mat:['carbono','inox'], peso:3000, cant:['1-10','10-100']},
+      {p:'torneado_conv', mat:['carbono','inox'], diam:400, long:1500, cant:['1-10'], maq:'Torno paralelo'}
      ]},
     {id:'turivel', n:'Mecanizados Turivel', loc:'Paterna', prov:'Valencia', c:[39.50,-0.44], tipo:'Empresa', plantilla:'10–25 personas',
      desc:'Mecanizado de precisión por arranque de viruta y tallado de engranajes. Series cortas y medias para maquinaria y automoción.',
@@ -634,20 +645,22 @@ footer .logo{height:24px}
       {p:'mig', mat:['carbono'], robot:false, cant:['1-10','10-100']}
      ]},
     {id:'urolan', n:'Tornería Urolan', loc:'Azpeitia', prov:'Gipuzkoa', c:[43.18,-2.27], tipo:'Empresa', plantilla:'10–25 personas',
-     desc:'Torneado de piezas grandes (ejes, rodillos y bridas de gran diámetro) y tallado de coronas y piñones.',
+     desc:'Torneado CNC y convencional de piezas grandes (ejes, rodillos y bridas de gran diámetro) y tallado de coronas y piñones.',
      modo:['taller'], cert:['iso9001'], conf:true, act:'08/2026',
      procs:[
       {p:'torneado', mat:['carbono','inox'], diam:900, long:4000, cant:['1-10','10-100'], maq:'Torno CNC de bancada larga'},
+      {p:'torneado_conv', mat:['carbono','inox','fundicion'], diam:1200, long:6000, cant:['1-10'], maq:'Torno paralelo de 6 m entre puntos'},
       {p:'fresado', mat:['carbono'], ejesMax:3, dims:[2000,800,700], cant:['1-10','10-100']},
       {p:'tallado', mat:['carbono'], diam:800, modulo:12, tipos:['recto','helicoidal'], cant:['1-10','10-100']}
      ]},
     {id:'debarra', n:'Mecanizados Debarra', loc:'Eibar', prov:'Gipuzkoa', c:[43.18,-2.47], tipo:'Empresa', plantilla:'25–50 personas',
-     desc:'Mecanizado en 5 ejes, torneado y rectificado para bienes de equipo y moldes.',
+     desc:'Mecanizado en 5 ejes, torneado, fresado convencional y rectificado para bienes de equipo y moldes.',
      modo:['taller'], cert:['iso9001'], conf:false, act:'09/2026',
      procs:[
       {p:'fresado', mat:['carbono','inox','aluminio'], ejesMax:5, dims:[1200,800,600], cant:['1-10','10-100','100-1000']},
       {p:'torneado', mat:['carbono','inox','aluminio','laton'], diam:300, long:800, cant:['1-10','10-100','100-1000']},
-      {p:'rectificado', mat:['carbono','inox'], tipos:['plano','cil_ext'], medida:1000, cant:['1-10','10-100']}
+      {p:'rectificado', mat:['carbono','inox'], tipos:['plano','cil_ext'], medida:1000, cant:['1-10','10-100']},
+      {p:'fresado_conv', mat:['carbono','inox','aluminio'], dims:[1500,600,500], cant:['1-10'], maq:'Fresadora de torreta y fresadora de bancada fija'}
      ]},
     {id:'vallesta', n:'Tubo Vallesta', loc:'Terrassa', prov:'Barcelona', c:[41.56,2.01], tipo:'Empresa', plantilla:'10–25 personas',
      desc:'Especialistas en tubo: corte láser, curvado de tubo y perfil, y plegado de chapa fina.',
@@ -675,7 +688,9 @@ footer .logo{height:24px}
       {p:'calderia', mat:['carbono'], peso:8000, cant:['1-10','10-100']},
       {p:'mig', mat:['carbono'], robot:false, cant:['1-10','10-100']},
       {p:'plasma', mat:['carbono'], esp:{carbono:30}, formato:[6000,2000], cant:['1-10','10-100']},
-      {p:'montaje', mat:['carbono'], tipos:['mecanico','electrico','ambos'], cant:['1-10','10-100']}
+      {p:'montaje', mat:['carbono'], tipos:['mecanico','electrico','ambos'], cant:['1-10','10-100']},
+      {p:'fresado_conv', mat:['carbono'], dims:[1000,400,400], cant:['1-10']},
+      {p:'torneado_conv', mat:['carbono'], diam:300, long:1000, cant:['1-10']}
      ]},
     {id:'tajuvel', n:'Galvanizados Tajuvel', loc:'Arganda del Rey', prov:'Madrid', c:[40.30,-3.44], tipo:'Empresa', plantilla:'25–50 personas',
      desc:'Galvanizado en caliente de estructura y piezas de acero, con chorreado previo si hace falta.',
@@ -776,7 +791,7 @@ footer .logo{height:24px}
   const paramVacio = (k, v) => v == null || v === '' || v === false || (Array.isArray(v) && v.some(x => x == null || x === ''));
 
   // ---------- Texto libre → filtros ----------
-  const VOCAB = ['mecanizado','mecanizados','mecanizar','torneado','tornear','fresado','fresadora','fresar','tallado','engranaje','engranajes','pinones','rectificado','rectificar','electroerosion',
+  const VOCAB = ['mecanizado','mecanizados','mecanizar','convencional','torneado','tornear','fresado','fresadora','fresar','tallado','engranaje','engranajes','pinones','rectificado','rectificar','electroerosion',
     'soldadura','soldar','soldado','soldados','soldadas','plegado','plegados','plegadas','plegar','curvado','curvar','cilindrado','cilindrar','virolas','punzonado','estampacion','estampado','laser','plasma','oxicorte',
     'calderia','caldereria','estructura','estructuras','pintura','pintar','pintado','polvo','lacado','galvanizado','galvanizada','galvanizar','cincado','zincado','anodizado','chorreado','granallado',
     'temple','templado','revenido','cementacion','nitruracion','recocido','tratamiento','tratamientos','termico','termicos','fundicion','fundido','coquilla','inyeccion',
@@ -792,7 +807,7 @@ footer .logo{height:24px}
   const NO_CORREGIR = new Set(['corta','cortas','corto','cortos','serie','series','llegar','pegar','pagar','placa','placas','plazo','plazos','metal','metales',
     'torre','torres','tuerca','tuercas','precio','precios','acera','pinta','pintas','grande','grandes','planos','plano','palas','salas','lados','montes','templo','tiempo','tiempos']);
   const STOP = new Set(('a al alguien alrededor alrededores aqui busco buscamos buscando cantidad carcasa carcasas cerca como con conjunto conjuntos de del e el empresa empresas en esa ese eso esta este esto estos estas fabrica fabricacion fabricar fabrique fabriquen hace hacen hacer haga hagan la las le les lo los maquina maquinas me metalica metalicas metalico metalicos mi mis necesito necesitamos ni nos o para parte partes pieza piezas poder por provincia proveedor proveedores pueda puedan puede que queremos quien quiero se sin soporte soportes su sus taller talleres trabaje trabajen trabajar trabajo trabajos tu tus u un una unas uno unos y zona medida medidas hecho hecha hechos hechas tipo cualquier algo nuestra nuestro nuestras nuestros').split(' '));
-  const RECONOCE = /^(mecani|torn|fres|tall|engran|pinon|corona|cremaller|rectif|electroero|erosion|hilo$|sold|pleg|curva|cilindr|virola|punzon|estamp|laser|plasma|oxicort|agua$|waterjet|cort|calder|estructur|pint|polvo|lacad|epoxi|liquid|galvaniz|cincad|zincad|anodiz|chorre|granall|templ|reven|cementa|nitrur|recoc|normaliz|gris$|nodular|tratam|termic|fundi|colada|coquilla|inyec|arena$|montaj|montar|impres|imprim|3d$|inox|alumin|bronce|laton|cobre|titanio|plastic|nylon|poliamida|delrin|peek$|teflon|pvc$|metacrilato|acero|hierro|carbono|chapa|tubo|perfil|diametro|espesor|mm$|kg$|ejes?$|casquill|bulon|brida|rodillo|barandill|escaler|bastidor|deposito|tolva|pasarela|cnc$|tig$|mig$|mag$|pom$|unidad|uds?$|serie|prototip|urgen|situ$|instalacion|obra$|planta$|desplaz|vengan?$|miles$|cientos$|larga$|media$|gran$|pequena$|sueltas?$|unica$|lotes?$|tirada|pedido|robot|certific|homolog|ø)/;
+  const RECONOCE = /^(mecani|convenc|torn|fres|tall|engran|pinon|corona|cremaller|rectif|electroero|erosion|hilo$|sold|pleg|curva|cilindr|virola|punzon|estamp|laser|plasma|oxicort|agua$|waterjet|cort|calder|estructur|pint|polvo|lacad|epoxi|liquid|galvaniz|cincad|zincad|anodiz|chorre|granall|templ|reven|cementa|nitrur|recoc|normaliz|gris$|nodular|tratam|termic|fundi|colada|coquilla|inyec|arena$|montaj|montar|impres|imprim|3d$|inox|alumin|bronce|laton|cobre|titanio|plastic|nylon|poliamida|delrin|peek$|teflon|pvc$|metacrilato|acero|hierro|carbono|chapa|tubo|perfil|diametro|espesor|mm$|kg$|ejes?$|casquill|bulon|brida|rodillo|barandill|escaler|bastidor|deposito|tolva|pasarela|cnc$|tig$|mig$|mag$|pom$|unidad|uds?$|serie|prototip|urgen|situ$|instalacion|obra$|planta$|desplaz|vengan?$|miles$|cientos$|larga$|media$|gran$|pequena$|sueltas?$|unica$|lotes?$|tirada|pedido|robot|certific|homolog|ø)/;
   const PIEZAS = [
     {re:/\b(engranaj\w*|pinon(es)?|coronas?|cremaller\w*)\b/, p:['tallado']},
     {re:/\b(ejes?|casquillos?|bulon(es)?|rodillos?|bridas?)\b/, p:['torneado']},
@@ -842,6 +857,7 @@ footer .logo{height:24px}
     if (!hay('Corte') && /\b(corte|cortes|cortar|cortad[oa]s?)\b/.test(s)) add(hayTubo ? 'corte_tubo' : 'corte');
     if (/\btorn(o|os|ao|ea\w*|er\w*)\b/.test(s)) add('torneado');
     if (/\bfres(a|ao|ar)\w*|\b(3|4|5|tres|cuatro|cinco) ejes\b/.test(s)) add('fresado');
+    if (/\bconvencional(es)?\b|\bmanual(es)?\b/.test(s)) q.procesos = q.procesos.map(p => p === 'torneado' ? 'torneado_conv' : p === 'fresado' ? 'fresado_conv' : p);
     if (/\btallad\w*|\btallar\b/.test(s)) add('tallado');
     if (/\brectific\w*/.test(s)) add('rectificado');
     if (/\belectroero\w*|\berosion\b|\bpor hilo\b/.test(s)) add('electroerosion');
@@ -1050,7 +1066,6 @@ footer .logo{height:24px}
   let buscado = false;
   const SEL = {
     procs:{vacio:'Elegir proceso', get:() => q.procesos, set:v => { q.procesos = v; }, nombre:nombreProc},
-    mat:{vacio:'Elegir material', get:() => q.materiales, set:v => { q.materiales = v; }, nombre:k => MAT[k]},
     prov:{vacio:'Elegir provincia', get:() => q.provs, set:v => { q.provs = v; }, nombre:k => PROV[k][0]}
   };
 
@@ -1063,6 +1078,7 @@ footer .logo{height:24px}
       $('abrir-' + id).textContent = $('lista-' + id).hidden ? (v.length ? 'Cambiar' : 'Elegir') : 'Cerrar';
       $('lista-' + id).querySelectorAll('input').forEach(i => { i.checked = v.includes(i.value); });
     });
+    $('pills-mat').querySelectorAll('button').forEach(b => { b.setAttribute('aria-pressed', q.materiales.includes(b.dataset.k) ? 'true' : 'false'); });
     $('presets').querySelectorAll('button').forEach((b, i) => { b.classList.toggle('activo', i === presetActivo); b.setAttribute('aria-pressed', i === presetActivo ? 'true' : 'false'); });
     pintarAfinar();
   }
@@ -1306,15 +1322,25 @@ footer .logo{height:24px}
   // ---------- Arranque ----------
   const opcion = (v, l) => `<label><input type="checkbox" value="${v}"> ${esc(l)}</label>`;
   $('lista-procs').innerHTML = FAMILIAS.map(f => `<fieldset><legend>${esc(f.l)}</legend>${f.g ? opcion(f.g, GRUPOS[f.g].corto) : ''}${f.ids.map(p => opcion(p, PROC[p].l)).join('')}</fieldset>`).join('');
-  $('lista-mat').innerHTML = `<fieldset>${Object.entries(MAT).map(([k, v]) => opcion(k, v)).join('')}</fieldset>`;
+  $('pills-mat').innerHTML = Object.entries(MAT).map(([k, v]) => `<button type="button" class="pill" data-k="${k}" aria-pressed="false">${esc(v)}</button>`).join('');
+  $('pills-mat').addEventListener('click', ev => {
+    const b = ev.target.closest('button[data-k]'); if (!b) return;
+    const k = b.dataset.k;
+    q.materiales = q.materiales.includes(k) ? q.materiales.filter(x => x !== k) : [...q.materiales, k];
+    cambioManual();
+  });
   $('lista-prov').innerHTML = `<fieldset>${Object.entries(PROV).sort((a, b) => norm(a[1][0]).localeCompare(norm(b[1][0]))).map(([k, v]) => opcion(k, v[0])).join('')}</fieldset>`;
   $('lista-cert').innerHTML = Object.entries(CERT).map(([k, v]) => opcion(k, v)).join('');
 
   const alternarLista = (id, abrir) => {
     const l = $('lista-' + id), a = abrir == null ? l.hidden : abrir;
+    const campo = $('campo-' + id), topAntes = campo.getBoundingClientRect().top;
     if (a) Object.keys(SEL).filter(o => o !== id).forEach(o => { $('lista-' + o).hidden = true; $('abrir-' + o).setAttribute('aria-expanded', 'false'); });
     l.hidden = !a; $('abrir-' + id).setAttribute('aria-expanded', String(a));
     pintarFiltros();
+    // Si al cerrar otra lista la página se ha encogido, se compensa el desplazamiento para que la caja pulsada no se mueva
+    const delta = campo.getBoundingClientRect().top - topAntes;
+    if (delta) window.scrollBy(0, delta);
   };
   Object.entries(SEL).forEach(([id, s]) => {
     $('lista-' + id).addEventListener('change', ev => {
