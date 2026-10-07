@@ -339,6 +339,8 @@ footer .logo{height:24px}
 @media (max-width:820px){
   .pill{font-size:.95rem;padding:.35rem .75rem}
 }
+.fuera{margin:1.25rem 0 0;padding:.9rem 1.1rem;background:var(--fondo-alt);border-radius:6px;color:var(--texto-suave);font-size:.95rem}
+.fuera .limpiar{margin-left:.35rem}
 
 </style>
 </head>
@@ -589,7 +591,7 @@ footer .logo{height:24px}
      ]},
     {id:'moncayal', n:'Calderería Moncayal', loc:'Cuarte de Huerva', prov:'Zaragoza', c:[41.59,-0.93], tipo:'Empresa', plantilla:'10–25 personas',
      desc:'Calderería y estructura metálica para industria. Cortan con plasma, pliegan, cilindran y sueldan; también montan en las instalaciones del cliente.',
-     modo:['taller','in situ'], zona:'Aragón y Navarra', cert:['en1090'], certNota:'EN 1090 clase EXC2', conf:false, act:'09/2026',
+     modo:['taller','in situ'], zona:'Aragón y Navarra', zonaProvs:['zaragoza','huesca','teruel','navarra'], cert:['en1090'], certNota:'EN 1090 clase EXC2', conf:false, act:'09/2026',
      procs:[
       {p:'plasma', mat:['carbono','inox'], esp:{carbono:40,inox:25}, formato:[6000,2000], cant:['1-10','10-100']},
       {p:'plegado', mat:['carbono','inox'], esp:{carbono:12,inox:8}, long:3000, cant:['1-10','10-100']},
@@ -639,7 +641,7 @@ footer .logo{height:24px}
      ]},
     {id:'nerbal', n:'Soldaduras Nerbal', loc:'Basauri', prov:'Bizkaia', c:[43.24,-2.89], tipo:'Profesional autónomo', plantilla:'Autónomo con 2 ayudantes',
      desc:'Soldadura TIG de inoxidable y aluminio, y MIG de estructura. Trabajan en su taller y en planta del cliente.',
-     modo:['taller','in situ'], zona:'País Vasco, Cantabria y Navarra', cert:['iso9606'], conf:true, act:'09/2026',
+     modo:['taller','in situ'], zona:'País Vasco, Cantabria y Navarra', zonaProvs:['bizkaia','gipuzkoa','alava','cantabria','navarra'], cert:['iso9606'], conf:true, act:'09/2026',
      procs:[
       {p:'tig', mat:['inox','aluminio'], robot:false, cant:['1-10','10-100']},
       {p:'mig', mat:['carbono'], robot:false, cant:['1-10','10-100']}
@@ -683,7 +685,7 @@ footer .logo{height:24px}
      ]},
     {id:'henarex', n:'Estructuras Henarex', loc:'Alcalá de Henares', prov:'Madrid', c:[40.48,-3.36], tipo:'Empresa', plantilla:'10–25 personas',
      desc:'Estructura metálica, calderería y montaje en obra y en planta.',
-     modo:['taller','in situ'], zona:'Madrid, Guadalajara y Toledo', cert:['en1090','iso9606'], certNota:'EN 1090 clase EXC2', conf:true, act:'09/2026',
+     modo:['taller','in situ'], zona:'Madrid, Guadalajara y Toledo', zonaProvs:['madrid','guadalajara','toledo'], cert:['en1090','iso9606'], certNota:'EN 1090 clase EXC2', conf:true, act:'09/2026',
      procs:[
       {p:'calderia', mat:['carbono'], peso:8000, cant:['1-10','10-100']},
       {p:'mig', mat:['carbono'], robot:false, cant:['1-10','10-100']},
@@ -1015,7 +1017,10 @@ footer .logo{height:24px}
     }
     let dist = null, cercaDe = null;
     q.provs.forEach(k => { const d = km(coordProv(k), e.c); if (dist == null || d < dist) { dist = d; cercaDe = k; } });
-    const enZona = q.provs.length ? q.provs.includes(provDe(e)) : null;
+    // La provincia es un filtro estricto: solo empresas de esas provincias o que se desplacen a ellas (cuando se pide trabajo en instalaciones)
+    const desplaza = q.insitu && q.provs.length > 0 && e.modo.includes('in situ') && !!e.zonaProvs && q.provs.some(k => e.zonaProvs.includes(k)) && !q.provs.includes(provDe(e));
+    const enZona = q.provs.length ? q.provs.includes(provDe(e)) || desplaza : null;
+    if (enZona === false) return null;
     const insitu = q.insitu ? e.modo.includes('in situ') : null;
     const faltanCert = q.certs.filter(c => !e.cert.includes(c));
     const certOk = q.certs.length ? faltanCert.length === 0 : null;
@@ -1033,7 +1038,7 @@ footer .logo{height:24px}
     const pIns = insitu === false ? 0 : 5;
     const pCert = certOk === false ? 0 : 5;
     const completo = per.every(x => x.tiene && x.mat !== false && x.params.every(p => p.ok !== false)) && insitu !== false && certOk !== false;
-    return {e, per, dist, cercaDe, enZona, insitu, certOk, faltanCert, cantOk, matProcs, completo, pts: pProc + pMat + pPar + pCant + pDist + pIns + pCert};
+    return {e, per, dist, cercaDe, enZona, desplaza, insitu, certOk, faltanCert, cantOk, matProcs, completo, pts: pProc + pMat + pPar + pCant + pDist + pIns + pCert};
   }
 
   const hayReq = q => q.procesos.length > 0 || q.materiales.length > 0 || q.insitu || q.certs.length > 0;
@@ -1134,8 +1139,7 @@ footer .logo{height:24px}
         out.push(ck('si', '✓', `${mayus(enumerar(q.materiales.filter(m => union.has(m)).map(k => minus(MAT[k]))))} en ${r.matProcs.map(p => minus(PROC[p].l)).join(', ')}`));
       }
     }
-    if (q.provs.length) out.push(r.enZona ? ck('si', '✓', `En ${r.e.prov}`) : ck('nd', '·', q.provs.length > 1 ? 'Fuera de tus provincias' : `Fuera de ${PROV[q.provs[0]][0]}`));
-    if (q.insitu) out.push(r.insitu ? ck('si', '✓', `Trabaja en tus instalaciones${r.e.zona ? ` (${r.e.zona})` : ''}`) : ck('no', '✗', 'Solo trabaja en su taller'));
+    if (q.insitu) out.push(r.insitu ? ck('si', '✓', r.desplaza ? `Se desplaza a ${enumerar(q.provs.filter(k => r.e.zonaProvs.includes(k)).map(k => PROV[k][0]))}` : `Trabaja en tus instalaciones${r.e.zona ? ` (${r.e.zona})` : ''}`) : ck('no', '✗', 'Solo trabaja en su taller'));
     if (q.certs.length) out.push(r.certOk ? ck('si', '✓', q.certs.map(c => CERT[c]).join(' · ')) : ck('no', '✗', `Sin ${r.faltanCert.map(c => CERT[c]).join(' ni ')}`));
     if (q.cantidad && r.cantOk !== null) out.push(r.cantOk ? ck('si', '✓', `${fmtNum(q.cantidad)} unidades: dentro de su rango habitual`) : ck('nd', '·', `${fmtNum(q.cantidad)} unidades: fuera de su rango habitual`));
     return out.join('');
@@ -1143,7 +1147,6 @@ footer .logo{height:24px}
 
   function tarjeta(r){
     const e = r.e, n = r.per.length;
-    const dist = r.dist != null && !r.enZona ? ` · a ${fmtNum(r.dist)} km de ${esc(PROV[r.cercaDe][0])}` : '';
     let encaje = '';
     if (hayReq(q)) {
       const nProc = r.per.filter(x => x.tiene).length;
@@ -1153,7 +1156,7 @@ footer .logo{height:24px}
     const hace = n ? '' : `<p class="hace">Hace: <b>${e.procs.map(c => esc(PROC[c.p].l)).join('</b> · <b>')}</b></p>`;
     return `<li class="res ${hayReq(q) && r.completo ? 'completo' : ''}">
       <a class="abrir" href="#${e.id}" data-id="${e.id}">
-        <div><h3>${esc(e.n)} <span class="etq">Ejemplo</span></h3><p class="lugar">${esc(e.loc)} (${esc(e.prov)})${dist}</p></div>
+        <div><h3>${esc(e.n)} <span class="etq">Ejemplo</span></h3><p class="lugar">${esc(e.loc)} (${esc(e.prov)})</p></div>
         ${encaje}
         ${cks ? `<ul class="checks">${cks}</ul>` : ''}
         ${hace}
@@ -1165,14 +1168,21 @@ footer .logo{height:24px}
   function pintarResultados(){
     const {lista, combo} = buscar(q);
     const cuerpo = $('res-cuerpo'), resumen = $('res-resumen');
+    const zona = q.provs.length ? enumerar(q.provs.map(k => PROV[k][0]), ' o ') : '';
+    // Cuántas empresas harían el trabajo fuera de las provincias elegidas (no se muestran; solo se avisa)
+    let fuera = '';
+    if (q.provs.length) {
+      const n = buscar(Object.assign({}, q, {provs:[]})).lista.filter(r => hayReq(q) ? r.completo : true).length - (hayReq(q) ? lista.filter(r => r.completo).length : lista.length);
+      if (n > 0) fuera = `<p class="fuera">Fuera de ${esc(zona)} hay ${n} empresa${n > 1 ? 's' : ''} de ejemplo que ${hayReq(q) ? 'encaja' + (n > 1 ? 'n' : '') + ' del todo' : 'podría' + (n > 1 ? 'n' : '') + ' interesarte'}. <button type="button" class="limpiar" id="quitar-prov">Buscar en toda España</button></p>`;
+    }
     if (!hayReq(q)) {
-      resumen.textContent = `${lista.length} empresas de ejemplo` + (q.provs.length ? `, primero las de ${enumerar(q.provs.map(k => PROV[k][0]))}` : '') + '. Elige un proceso o un material para acotar.';
-      cuerpo.innerHTML = `<ol class="lista">${lista.map(tarjeta).join('')}</ol>`;
+      resumen.textContent = `${lista.length} empresa${lista.length === 1 ? '' : 's'} de ejemplo${zona ? ` en ${zona}` : ''}. Elige un proceso o un material para acotar.`;
+      cuerpo.innerHTML = (lista.length ? `<ol class="lista">${lista.map(tarjeta).join('')}</ol>` : `<div class="nada"><p>Ninguna empresa de la demo está en ${esc(zona)}.</p></div>`) + fuera;
       return;
     }
     if (!lista.length) {
       resumen.textContent = '0 empresas';
-      cuerpo.innerHTML = '<div class="nada"><p>Ninguna empresa de la demo hace eso. Prueba a quitar algún filtro.</p></div>';
+      cuerpo.innerHTML = `<div class="nada"><p>Ninguna empresa de la demo${zona ? ` en ${esc(zona)}` : ''} hace eso. Prueba a quitar algún filtro.</p></div>` + fuera;
       return;
     }
     const completos = lista.filter(r => r.completo), parciales = lista.filter(r => !r.completo);
@@ -1185,7 +1195,7 @@ footer .logo{height:24px}
       html += `<div class="combo"><h3>Combinación posible</h3><p><b>${esc(combo.a.e.n)}</b> (${esc(cubre(combo.a))}) + <b>${esc(combo.b.e.n)}</b> (${esc(cubre(combo.b))}). Entre las dos cubren todo lo que pides.</p></div>`;
     }
     if (parciales.length) html += `<p class="grupo">Cumplen una parte</p><ol class="lista">${parciales.map(tarjeta).join('')}</ol>`;
-    cuerpo.innerHTML = html;
+    cuerpo.innerHTML = html + fuera;
   }
 
   function lanzarBusqueda(bajar){
@@ -1236,8 +1246,6 @@ footer .logo{height:24px}
   // ---------- Ficha ----------
   function fichaHTML(e){
     const pedidos = new Set(q.procesos.flatMap(idsDe));
-    let dist = null, cercaDe = null;
-    q.provs.forEach(k => { const d = km(coordProv(k), e.c); if (dist == null || d < dist) { dist = d; cercaDe = k; } });
     const procs = e.procs.map(cap => {
       const pr = PROC[cap.p];
       const pedido = pedidos.size ? pedidos.has(cap.p) : q.materiales.length > 0;
@@ -1268,7 +1276,7 @@ footer .logo{height:24px}
       <div class="ficha-cab">
         <div>
           <h1>${esc(e.n)} <span class="etq">Empresa de ejemplo</span></h1>
-          <p class="lugar">${esc(e.loc)} (${esc(e.prov)}) · ${esc(e.tipo)} · ${esc(e.plantilla)}${dist != null ? ` · a ${fmtNum(dist)} km de ${esc(PROV[cercaDe][0])}` : ''}</p>
+          <p class="lugar">${esc(e.loc)} (${esc(e.prov)}) · ${esc(e.tipo)} · ${esc(e.plantilla)}</p>
         </div>
         <div class="procedencia ${e.conf ? 'conf' : 'pend'}">
           <b>${e.conf ? 'Datos confirmados' : 'Pendiente de confirmar'}</b>
@@ -1389,6 +1397,7 @@ footer .logo{height:24px}
   $('btn-texto').addEventListener('click', () => { const t = $('q').value.trim(); if (t) aplicarTexto(t); });
   $('q').addEventListener('keydown', ev => { if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); $('btn-texto').click(); } });
   document.addEventListener('click', ev => {
+    if (ev.target.id === 'quitar-prov') { q.provs = []; cambioManual(); return; }
     const a = ev.target.closest('a.abrir'); if (!a) return;
     ev.preventDefault(); scrollAntes = window.scrollY; location.hash = a.dataset.id;
   });
