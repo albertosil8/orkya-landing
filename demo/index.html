@@ -269,8 +269,6 @@ footer .logo{height:24px}
 .campo-g > label,.campo-g > .lbl{font-size:.85rem;color:var(--texto-suave);font-weight:500}
 .campo-g select{appearance:none;-webkit-appearance:none;width:100%;border:0;background:transparent;padding:0 1.6rem 0 0;font-size:1.2rem;font-weight:500;min-height:2rem;cursor:pointer}
 .campo-g select:focus{outline:none}
-.campo-g::after{content:"";position:absolute;right:1rem;top:50%;width:.55rem;height:.55rem;border-right:2px solid var(--texto-suave);border-bottom:2px solid var(--texto-suave);transform:translateY(-70%) rotate(45deg);pointer-events:none}
-#campo-procs::after{display:none}
 .campo-g .sel-procs{border:0;background:transparent;padding:0;min-height:2rem;gap:.4rem;cursor:pointer}
 .campo-g .sel-procs .vacio{font-size:1.2rem;font-weight:500;color:var(--texto);padding:0}
 .campo-g .pchip{font-size:1.02rem}
@@ -291,6 +289,13 @@ footer .logo{height:24px}
   .mas .texto-libre .caja{flex-direction:column}
   .campo-g .lista-procs{grid-template-columns:1fr}
 }
+.lista-mat,.lista-prov{display:block}
+.lista-mat fieldset,.lista-prov fieldset{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.1rem .8rem}
+.lista-prov label{font-size:.95rem}
+@media (max-width:820px){
+  .lista-mat fieldset,.lista-prov fieldset{grid-template-columns:repeat(2,1fr);gap:.1rem .5rem}
+  .lista-prov label{font-size:.92rem}
+}
 
 </style>
 </head>
@@ -308,7 +313,7 @@ footer .logo{height:24px}
     <section class="buscador" aria-labelledby="t-buscar">
       <div class="wrap">
         <h1 id="t-buscar">¿Qué necesitas fabricar?</h1>
-        <p class="intro">Elige proceso, material y provincia.</p>
+        <p class="intro">Elige proceso, material y provincia. Puedes marcar varios.</p>
 
         <form class="caja-busqueda" id="form-busqueda" role="search" aria-label="Buscar empresas">
           <div class="campo-g" id="campo-procs">
@@ -319,8 +324,22 @@ footer .logo{height:24px}
             </div>
             <div class="lista-procs" id="lista-procs" hidden></div>
           </div>
-          <div class="campo-g"><label for="f-mat">Material</label><select id="f-mat"></select></div>
-          <div class="campo-g"><label for="f-prov">Provincia</label><select id="f-prov"></select></div>
+          <div class="campo-g" id="campo-mat">
+            <span class="lbl" id="lbl-mat">Material</span>
+            <div class="sel-procs" id="sel-mat" role="group" aria-labelledby="lbl-mat">
+              <span id="chips-mat" style="display:contents"></span>
+              <button type="button" class="abrir-procs" id="abrir-mat" aria-expanded="false" aria-controls="lista-mat">Elegir</button>
+            </div>
+            <div class="lista-procs lista-mat" id="lista-mat" hidden></div>
+          </div>
+          <div class="campo-g" id="campo-prov">
+            <span class="lbl" id="lbl-prov">Provincia</span>
+            <div class="sel-procs" id="sel-prov" role="group" aria-labelledby="lbl-prov">
+              <span id="chips-prov" style="display:contents"></span>
+              <button type="button" class="abrir-procs" id="abrir-prov" aria-expanded="false" aria-controls="lista-prov">Elegir</button>
+            </div>
+            <div class="lista-procs lista-prov" id="lista-prov" hidden></div>
+          </div>
 
           <details class="mas" id="mas">
             <summary>Más opciones</summary>
@@ -596,12 +615,12 @@ footer .logo{height:24px}
 
   // Búsquedas de ejemplo que rellenan los filtros directamente
   const PRESETS = [
-    {l:'Chapa en Zaragoza', q:{procesos:['corte_laser','plegado','tig'], material:'inox', espesor:3, cantidad:'100-1000', prov:'zaragoza'}},
-    {l:'Mecanizado en Valencia', q:{procesos:['mecanizado'], material:'aluminio', cantidad:'10-100', prov:'valencia'}},
-    {l:'Engranajes de inoxidable', q:{procesos:['tallado'], material:'inox'}},
-    {l:'Soldador que vaya a planta', q:{procesos:['soldadura'], insitu:true, prov:'navarra'}},
-    {l:'Estructura galvanizada en Madrid', q:{procesos:['calderia','galvanizado'], material:'carbono', prov:'madrid'}},
-    {l:'Quién trabaja inoxidable', q:{material:'inox'}}
+    {l:'Chapa en Zaragoza', q:{procesos:['corte_laser','plegado','tig'], materiales:['inox'], espesor:3, cantidad:'100-1000', provs:['zaragoza']}},
+    {l:'Mecanizado en 4 provincias', q:{procesos:['mecanizado'], materiales:['aluminio','inox'], cantidad:'10-100', provs:['alicante','valencia','murcia','albacete']}},
+    {l:'Engranajes de inoxidable', q:{procesos:['tallado'], materiales:['inox']}},
+    {l:'Soldador que vaya a planta', q:{procesos:['soldadura'], insitu:true, provs:['navarra']}},
+    {l:'Estructura galvanizada en Madrid', q:{procesos:['calderia','galvanizado'], materiales:['carbono'], provs:['madrid']}},
+    {l:'Quién trabaja inoxidable o aluminio', q:{materiales:['inox','aluminio']}}
   ];
   // Frases de ejemplo para el texto libre (dos con faltas a propósito)
   const EJEMPLOS = [
@@ -620,7 +639,11 @@ footer .logo{height:24px}
   const nombreProc = id => (PROC[id] || GRUPOS[id]).l;
   const famDe = id => (PROC[id] || GRUPOS[id]).f;
   const idsDe = id => GRUPOS[id] ? GRUPOS[id].ids : [id];
-  const vacio = () => ({procesos:[], material:null, espesor:null, diametro:null, cantidad:null, prov:null, insitu:false});
+  const vacio = () => ({procesos:[], materiales:[], espesor:null, diametro:null, cantidad:null, provs:[], insitu:false});
+  const enumerar = (arr, sep = ' y ') => arr.length <= 1 ? arr.join('') : arr.slice(0, -1).join(', ') + sep + arr[arr.length - 1];
+  const listaMat = ks => enumerar(ks.map(k => minus(MAT[k])), ' o ');
+  const mayus = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const provDe = e => ALIAS[norm(e.prov)];
   const necesita = (lista, procs) => procs.some(p => idsDe(p).some(x => lista.includes(x)));
   const bucket = n => n <= 10 ? '1-10' : n <= 100 ? '10-100' : n <= 1000 ? '100-1000' : '1000+';
 
@@ -711,12 +734,12 @@ footer .logo{height:24px}
     if (/\b3d\b|\bimprimir\b/.test(s)) add('imp3d');
     if (!q.procesos.length && /\bcnc\b/.test(s)) add('mecanizado');
 
-    if (/\binox\w*/.test(s)) q.material = 'inox';
-    else if (/\balumin\w*/.test(s)) q.material = 'aluminio';
-    else if (/\bbronce\b/.test(s)) q.material = 'bronce';
-    else if (/\blaton\b/.test(s)) q.material = 'laton';
-    else if (/\bplastic\w*|\b(nylon|poliamida|pom|delrin|peek|teflon|pvc|metacrilato)\b/.test(s)) q.material = 'plastico';
-    else if (/\bacero\w*|\bhierro\w*|\bcarbono\b/.test(s)) q.material = 'carbono';
+    if (/\binox\w*/.test(s)) q.materiales.push('inox');
+    if (/\balumin\w*/.test(s)) q.materiales.push('aluminio');
+    if (/\bbronce\b/.test(s)) q.materiales.push('bronce');
+    if (/\blaton\b/.test(s)) q.materiales.push('laton');
+    if (/\bplastic\w*|\b(nylon|poliamida|pom|delrin|peek|teflon|pvc|metacrilato)\b/.test(s)) q.materiales.push('plastico');
+    if (/\bacero (al )?carbono\b|\bhierro\w*|\bcarbono\b/.test(s) || (/\bacero\w*/.test(s) && !/\bacero inox\w*/.test(s))) q.materiales.push('carbono');
 
     let m;
     const reMm = /(\d+(?:[.,]\d+)?)\s*mm\b/g;
@@ -742,7 +765,8 @@ footer .logo{height:24px}
       else if ((m = /serie media|cientos/.exec(s))) { q.cantidad = '100-1000'; cantTxt = m[0]; }
       else if ((m = /gran serie|serie larga|miles/.exec(s))) { q.cantidad = '1000+'; cantTxt = m[0]; }
     }
-    for (const [re, k] of ALIAS_ORD) if (re.test(s)) { q.prov = k; break; }
+    let sProv = s;
+    for (const [re, k, txt] of ALIAS_ORD) if (re.test(sProv)) { if (!q.provs.includes(k)) q.provs.push(k); sProv = sProv.replace(new RegExp('(^| )' + txt + '( |$)', 'g'), ' '); }
     if (/\bin situ\b|\ben (mis|nuestras|sus|las) instalaciones\b|\ben (obra|planta)\b|\bdesplaz\w*|\bque vengan?\b/.test(s)) q.insitu = true;
     const plazo = /\burgen\w*|cuanto antes|lo antes posible/.test(s);
 
@@ -772,9 +796,9 @@ footer .logo{height:24px}
     let mejor = null, mejorPts = -1;
     for (const cap of caps) {
       const r = {req, tiene:true, cap, mat:null, esp:null, diam:null, cant:null};
-      if (q.material) r.mat = cap.mat.includes(q.material);
+      if (q.materiales.length) { r.mats = cap.mat.filter(m => q.materiales.includes(m)); r.mat = r.mats.length > 0; }
       if (q.espesor != null && CON_ESPESOR.includes(cap.p)) {
-        if (cap.esp) { const max = (q.material && cap.esp[q.material] != null) ? cap.esp[q.material] : Math.max(...Object.values(cap.esp)); r.esp = {ok: q.espesor <= max, max}; }
+        if (cap.esp) { const conDato = (r.mats || []).filter(m => cap.esp[m] != null); const max = conDato.length ? Math.max(...conDato.map(m => cap.esp[m])) : Math.max(...Object.values(cap.esp)); r.esp = {ok: q.espesor <= max, max}; }
         else r.esp = {ok:null};
       }
       if (q.diametro != null && CON_DIAMETRO.includes(cap.p)) r.diam = cap.diam ? {ok: q.diametro <= cap.diam, max: cap.diam} : {ok:null};
@@ -790,11 +814,13 @@ footer .logo{height:24px}
     const n = per.length, con = per.filter(x => x.tiene);
     let matProcs = null;
     if (n && !con.length) return null;
-    if (!n && q.material) {
-      matProcs = e.procs.filter(c => c.mat.includes(q.material)).map(c => c.p);
+    if (!n && q.materiales.length) {
+      matProcs = e.procs.filter(c => c.mat.some(m => q.materiales.includes(m))).map(c => c.p);
       if (!matProcs.length) return null;
     }
-    const dist = q.prov ? km(coordProv(q.prov), e.c) : null;
+    let dist = null, cercaDe = null;
+    q.provs.forEach(k => { const d = km(coordProv(k), e.c); if (dist == null || d < dist) { dist = d; cercaDe = k; } });
+    const enZona = q.provs.length ? q.provs.includes(provDe(e)) : null;
     const insitu = q.insitu ? e.modo.includes('in situ') : null;
     let cantOk = null;
     if (q.cantidad) {
@@ -802,7 +828,7 @@ footer .logo{height:24px}
       else cantOk = e.procs.filter(c => !matProcs || matProcs.includes(c.p)).some(c => c.cant && c.cant.includes(q.cantidad));
     }
     const pProc = n ? con.length / n * 50 : 50;
-    const pMat = q.material && n ? per.filter(x => x.tiene && x.mat).length / n * 20 : 20;
+    const pMat = q.materiales.length && n ? per.filter(x => x.tiene && x.mat).length / n * 20 : 20;
     const params = [];
     con.forEach(x => { if (x.esp) params.push(x.esp.ok === true ? 1 : x.esp.ok === null ? .5 : 0); if (x.diam) params.push(x.diam.ok === true ? 1 : x.diam.ok === null ? .5 : 0); });
     const pPar = (params.length ? params.reduce((a, b) => a + b, 0) / params.length : 1) * 10;
@@ -810,14 +836,14 @@ footer .logo{height:24px}
     const pDist = (dist == null ? 1 : Math.max(0, 1 - dist / 500)) * 15;
     const pIns = insitu === false ? 0 : 10;
     const completo = per.every(x => x.tiene && x.mat !== false && !(x.esp && x.esp.ok === false) && !(x.diam && x.diam.ok === false)) && insitu !== false;
-    return {e, per, dist, insitu, cantOk, matProcs, completo, pts: pProc + pMat + pPar + pCant + pDist + pIns};
+    return {e, per, dist, cercaDe, enZona, insitu, cantOk, matProcs, completo, pts: pProc + pMat + pPar + pCant + pDist + pIns};
   }
 
-  const hayReq = q => q.procesos.length > 0 || !!q.material || q.insitu;
+  const hayReq = q => q.procesos.length > 0 || q.materiales.length > 0 || q.insitu;
 
   function buscar(q){
     const lista = EMPRESAS.map(e => evaluarEmpresa(e, q)).filter(Boolean)
-      .sort((a, b) => (b.completo - a.completo) || (b.pts - a.pts) || (b.e.conf - a.e.conf) || a.e.n.localeCompare(b.e.n, 'es'));
+      .sort((a, b) => (b.completo - a.completo) || ((b.enZona === true) - (a.enZona === true)) || (b.pts - a.pts) || (b.e.conf - a.e.conf) || a.e.n.localeCompare(b.e.n, 'es'));
     let combo = null;
     const cercaCompleto = lista.some(r => r.completo && (r.dist == null || r.dist <= 150));
     if (!cercaCompleto && q.procesos.length > 1) {
@@ -830,7 +856,7 @@ footer .logo{height:24px}
         const d = Math.max(a.dist || 0, b.dist || 0);
         if (!mejor || d < mejor.d) mejor = {a, b, d};
       }
-      if (mejor && (q.prov == null || mejor.d <= 200)) combo = mejor;
+      if (mejor && (!q.provs.length || mejor.d <= 200)) combo = mejor;
     }
     return {lista, combo};
   }
@@ -840,17 +866,22 @@ footer .logo{height:24px}
   const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   let q = vacio();
   let presetActivo = null;
+  const SEL = {
+    procs:{vacio:'Elegir proceso', get:() => q.procesos, set:v => { q.procesos = v; }, nombre:nombreProc},
+    mat:{vacio:'Elegir material', get:() => q.materiales, set:v => { q.materiales = v; }, nombre:k => MAT[k]},
+    prov:{vacio:'Elegir provincia', get:() => q.provs, set:v => { q.provs = v; }, nombre:k => PROV[k][0]}
+  };
 
   function pintarFiltros(){
-    const cp = $('chips-procs');
-    cp.innerHTML = q.procesos.length
-      ? q.procesos.map(p => `<span class="pchip">${esc(nombreProc(p))}<button type="button" data-p="${p}" aria-label="Quitar ${esc(nombreProc(p))}">×</button></span>`).join('')
-      : '<span class="vacio">Cualquier proceso</span>';
-    $('abrir-procs').textContent = $('lista-procs').hidden ? (q.procesos.length ? 'Cambiar' : 'Elegir') : 'Cerrar';
-    $('lista-procs').querySelectorAll('input').forEach(i => { i.checked = q.procesos.includes(i.value); });
-    $('f-mat').value = q.material || '';
+    Object.entries(SEL).forEach(([id, s]) => {
+      const v = s.get();
+      $('chips-' + id).innerHTML = v.length
+        ? v.map(k => `<span class="pchip">${esc(s.nombre(k))}<button type="button" data-k="${k}" aria-label="Quitar ${esc(s.nombre(k))}">×</button></span>`).join('')
+        : `<span class="vacio">${s.vacio}</span>`;
+      $('abrir-' + id).textContent = $('lista-' + id).hidden ? (v.length ? 'Cambiar' : 'Elegir') : 'Cerrar';
+      $('lista-' + id).querySelectorAll('input').forEach(i => { i.checked = v.includes(i.value); });
+    });
     $('f-cant').value = q.cantidad || '';
-    $('f-prov').value = q.prov || '';
     $('f-insitu').checked = !!q.insitu;
     const verEsp = necesita(CON_ESPESOR, q.procesos), verDiam = necesita(CON_DIAMETRO, q.procesos);
     $('campo-esp').hidden = !verEsp; $('campo-diam').hidden = !verDiam;
@@ -866,14 +897,19 @@ footer .logo{height:24px}
       if (!x.tiene) { out.push(ck('no', '✗', `${nombreProc(x.req)}: no lo ofrece` + (x.alt.length ? ` (hace ${x.alt.join(', ')})` : ''))); return; }
       const l = PROC[x.cap.p].l;
       out.push(ck('si', '✓', l));
-      if (x.mat === false) out.push(ck('no', '✗', `No trabaja ${minus(MAT[q.material])} en ${minus(l)}`));
+      if (x.mat === false) out.push(ck('no', '✗', `No trabaja ${listaMat(q.materiales)} en ${minus(l)}`));
+      else if (x.mat && q.materiales.length > 1 && x.mats.length < q.materiales.length) out.push(ck('si', '✓', `${mayus(listaMat(x.mats))} en ${minus(l)}`));
       if (x.esp) out.push(x.esp.ok === null ? ck('nd', '·', `Espesor en ${minus(l)}: sin dato`) : ck(x.esp.ok ? 'si' : 'no', x.esp.ok ? '✓' : '✗', `${fmtNum(q.espesor)} mm en ${minus(l)} (máx. ${fmtNum(x.esp.max)} mm)`));
       if (x.diam) out.push(x.diam.ok === null ? ck('nd', '·', 'Diámetro: sin dato') : ck(x.diam.ok ? 'si' : 'no', x.diam.ok ? '✓' : '✗', `Ø ${fmtNum(q.diametro)} mm (máx. ${fmtNum(x.diam.max)} mm)`));
     });
-    if (q.material) {
-      if (n) { if (r.per.every(x => x.tiene && x.mat)) out.push(ck('si', '✓', `${MAT[q.material]}${n > 1 ? ' en todos los procesos' : ''}`)); }
-      else out.push(ck('si', '✓', `${MAT[q.material]} en ${r.matProcs.map(p => minus(PROC[p].l)).join(', ')}`));
+    if (q.materiales.length) {
+      if (n) { if (r.per.every(x => x.tiene && x.mat && x.mats.length === q.materiales.length)) out.push(ck('si', '✓', `${mayus(enumerar(q.materiales.map(k => minus(MAT[k]))))}${n > 1 ? ' en todos los procesos' : ''}`)); }
+      else {
+        const union = new Set(r.e.procs.filter(c => r.matProcs.includes(c.p)).flatMap(c => c.mat));
+        out.push(ck('si', '✓', `${mayus(enumerar(q.materiales.filter(m => union.has(m)).map(k => minus(MAT[k]))))} en ${r.matProcs.map(p => minus(PROC[p].l)).join(', ')}`));
+      }
     }
+    if (q.provs.length) out.push(r.enZona ? ck('si', '✓', `En ${r.e.prov}`) : ck('nd', '·', q.provs.length > 1 ? 'Fuera de tus provincias' : `Fuera de ${PROV[q.provs[0]][0]}`));
     if (q.insitu) out.push(r.insitu ? ck('si', '✓', `Trabaja en tus instalaciones${r.e.zona ? ` (${r.e.zona})` : ''}`) : ck('no', '✗', 'Solo trabaja en su taller'));
     if (q.cantidad && r.cantOk !== null) out.push(r.cantOk ? ck('si', '✓', `${CANT[q.cantidad]} unidades: dentro de su rango habitual`) : ck('nd', '·', `${CANT[q.cantidad]} unidades: fuera de su rango habitual`));
     return out.join('');
@@ -881,7 +917,7 @@ footer .logo{height:24px}
 
   function tarjeta(r){
     const e = r.e, n = r.per.length;
-    const dist = r.dist != null ? ` · a ${fmtNum(r.dist)} km de ${esc(PROV[q.prov][0])}` : '';
+    const dist = r.dist != null && !r.enZona ? ` · a ${fmtNum(r.dist)} km de ${esc(PROV[r.cercaDe][0])}` : '';
     let encaje = '';
     if (hayReq(q)) {
       const nProc = r.per.filter(x => x.tiene).length;
@@ -904,7 +940,7 @@ footer .logo{height:24px}
     const {lista, combo} = buscar(q);
     const cuerpo = $('res-cuerpo'), resumen = $('res-resumen');
     if (!hayReq(q)) {
-      resumen.textContent = `${lista.length} empresas de ejemplo` + (q.prov ? `, de más cerca a más lejos de ${PROV[q.prov][0]}` : '') + '. Elige un proceso o un material para acotar.';
+      resumen.textContent = `${lista.length} empresas de ejemplo` + (q.provs.length ? `, primero las de ${enumerar(q.provs.map(k => PROV[k][0]))}` : '') + '. Elige un proceso o un material para acotar.';
       cuerpo.innerHTML = `<ol class="lista">${lista.map(tarjeta).join('')}</ol>`;
       return;
     }
@@ -938,11 +974,11 @@ footer .logo{height:24px}
   function pintarEntendido(info){
     const partes = [];
     q.procesos.forEach(p => partes.push(`<b>${esc(nombreProc(p))}</b>${info.motivo[p] ? ` (${esc(info.motivo[p])})` : ''}`));
-    if (q.material) partes.push(`<b>${esc(MAT[q.material])}</b>`);
+    if (q.materiales.length) partes.push(`<b>${esc(mayus(enumerar(q.materiales.map(k => minus(MAT[k])), ' o ')))}</b>`);
     if (q.espesor != null) partes.push(`<b>${fmtNum(q.espesor)} mm de espesor</b>`);
     if (q.diametro != null) partes.push(`<b>Ø ${fmtNum(q.diametro)} mm</b>`);
     if (q.cantidad) partes.push(`<b>${CANT[q.cantidad]} unidades</b>${info.cantTxt ? ` (por «${esc(info.cantTxt)}»)` : ''}`);
-    if (q.prov) partes.push(`<b>${esc(PROV[q.prov][0])}</b>`);
+    if (q.provs.length) partes.push(`<b>${esc(enumerar(q.provs.map(k => PROV[k][0])))}</b>`);
     if (q.insitu) partes.push('<b>En tus instalaciones</b>');
     let html = partes.length ? `He puesto en los filtros: ${partes.join(' · ')}.` : '<span class="falta">No he reconocido ningún proceso, material ni provincia. Usa los filtros de arriba.</span>';
     if (info.correcciones.length) html += ` He leído ${info.correcciones.map(([a, b]) => `«${esc(a)}» como «${esc(b)}»`).join(', ')}.`;
@@ -969,19 +1005,20 @@ footer .logo{height:24px}
   // ---------- Ficha ----------
   function fichaHTML(e){
     const pedidos = new Set(q.procesos.flatMap(idsDe));
-    const dist = q.prov ? km(coordProv(q.prov), e.c) : null;
+    let dist = null, cercaDe = null;
+    q.provs.forEach(k => { const d = km(coordProv(k), e.c); if (dist == null || d < dist) { dist = d; cercaDe = k; } });
     const procs = e.procs.map(cap => {
       const pr = PROC[cap.p];
-      const pedido = pedidos.size ? pedidos.has(cap.p) : !!q.material;
+      const pedido = pedidos.size ? pedidos.has(cap.p) : q.materiales.length > 0;
       const filas = [];
-      filas.push(['Materiales', `<span class="mats">${cap.mat.map(m => `<span class="mat ${q.material === m && pedido ? 'mark' : ''}">${esc(MAT[m])}</span>`).join('')}</span>`]);
+      filas.push(['Materiales', `<span class="mats">${cap.mat.map(m => `<span class="mat ${q.materiales.includes(m) && pedido ? 'mark' : ''}">${esc(MAT[m])}</span>`).join('')}</span>`]);
       if (cap.esp) filas.push(['Espesor máximo', Object.entries(cap.esp).map(([m, v]) => `${esc(MAT[m])}: ${fmtNum(v)} mm`).join(' · ')]);
       if (cap.diam) filas.push([cap.p === 'corte_tubo' ? 'Diámetro de tubo' : 'Diámetro máximo', `${fmtNum(cap.diam)} mm`]);
       if (cap.ejes) filas.push(['Ejes', esc(cap.ejes)]);
       if (cap.formato) filas.push(['Dimensiones', esc(cap.formato)]);
       if (cap.cant) filas.push(['Cantidades habituales', cap.cant.map(c => CANT[c]).join(' · ') + ' unidades']);
       if (cap.maq) filas.push(['Maquinaria', esc(cap.maq)]);
-      const coincide = pedido && (!q.material || cap.mat.includes(q.material));
+      const coincide = pedido && (!q.materiales.length || cap.mat.some(m => q.materiales.includes(m)));
       return `<article class="proc ${coincide ? 'coincide' : ''}">
         <div class="proc-cab"><h3>${esc(pr.l)}</h3><span>${coincide ? '<span class="coin">Coincide con tu búsqueda</span> · ' : ''}<span class="fam">${esc(pr.f)}</span></span></div>
         <dl class="filas">${filas.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
@@ -992,7 +1029,7 @@ footer .logo{height:24px}
       <div class="ficha-cab">
         <div>
           <h1>${esc(e.n)} <span class="etq">Empresa de ejemplo</span></h1>
-          <p class="lugar">${esc(e.loc)} (${esc(e.prov)}) · ${esc(e.tipo)} · ${esc(e.plantilla)}${dist != null ? ` · a ${fmtNum(dist)} km de ${esc(PROV[q.prov][0])}` : ''}</p>
+          <p class="lugar">${esc(e.loc)} (${esc(e.prov)}) · ${esc(e.tipo)} · ${esc(e.plantilla)}${dist != null ? ` · a ${fmtNum(dist)} km de ${esc(PROV[cercaDe][0])}` : ''}</p>
         </div>
         <div class="procedencia ${e.conf ? 'conf' : 'pend'}">
           <b>${e.conf ? 'Datos confirmados' : 'Pendiente de confirmar'}</b>
@@ -1046,35 +1083,34 @@ footer .logo{height:24px}
   // ---------- Arranque ----------
   const opcion = (v, l) => `<label><input type="checkbox" value="${v}"> ${esc(l)}</label>`;
   $('lista-procs').innerHTML = FAMILIAS.map(f => `<fieldset><legend>${esc(f.l)}</legend>${f.g ? opcion(f.g, GRUPOS[f.g].corto) : ''}${f.ids.map(p => opcion(p, PROC[p].l)).join('')}</fieldset>`).join('');
-  $('f-mat').innerHTML = '<option value="">Cualquier material</option>' + Object.entries(MAT).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('');
+  $('lista-mat').innerHTML = `<fieldset>${Object.entries(MAT).map(([k, v]) => opcion(k, v)).join('')}</fieldset>`;
   $('f-cant').innerHTML = '<option value="">Cualquier cantidad</option>' + Object.entries(CANT).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
-  $('f-prov').innerHTML = '<option value="">Toda España</option>' + Object.entries(PROV).sort((a, b) => norm(a[1][0]).localeCompare(norm(b[1][0]))).map(([k, v]) => `<option value="${k}">${esc(v[0])}</option>`).join('');
+  $('lista-prov').innerHTML = `<fieldset>${Object.entries(PROV).sort((a, b) => norm(a[1][0]).localeCompare(norm(b[1][0]))).map(([k, v]) => opcion(k, v[0])).join('')}</fieldset>`;
 
-  $('lista-procs').addEventListener('change', ev => {
-    const i = ev.target; if (i.type !== 'checkbox') return;
-    const p = i.value;
-    if (i.checked) {
-      if (GRUPOS[p]) q.procesos = q.procesos.filter(x => !GRUPOS[p].ids.includes(x));
-      else q.procesos = q.procesos.filter(x => !(GRUPOS[x] && GRUPOS[x].ids.includes(p)));
-      if (!q.procesos.includes(p)) q.procesos.push(p);
-    } else q.procesos = q.procesos.filter(x => x !== p);
-    cambioManual();
-  });
-  $('chips-procs').addEventListener('click', ev => {
-    const b = ev.target.closest('button[data-p]'); if (!b) return;
-    q.procesos = q.procesos.filter(x => x !== b.dataset.p);
-    cambioManual();
-    $('abrir-procs').focus();
-  });
-  const alternarLista = abrir => {
-    const l = $('lista-procs'), a = abrir == null ? l.hidden : abrir;
-    l.hidden = !a; $('abrir-procs').setAttribute('aria-expanded', String(a)); $('abrir-procs').textContent = a ? 'Cerrar' : (q.procesos.length ? 'Cambiar' : 'Elegir');
+  const alternarLista = (id, abrir) => {
+    const l = $('lista-' + id), a = abrir == null ? l.hidden : abrir;
+    if (a) Object.keys(SEL).filter(o => o !== id).forEach(o => { $('lista-' + o).hidden = true; $('abrir-' + o).setAttribute('aria-expanded', 'false'); });
+    l.hidden = !a; $('abrir-' + id).setAttribute('aria-expanded', String(a));
+    pintarFiltros();
   };
-  $('abrir-procs').addEventListener('click', () => alternarLista());
-  $('sel-procs').addEventListener('click', ev => { if (ev.target === $('sel-procs') || ev.target.classList.contains('vacio') || ev.target.classList.contains('pchip')) alternarLista(true); });
-  $('f-mat').addEventListener('change', ev => { q.material = ev.target.value || null; cambioManual(); });
+  Object.entries(SEL).forEach(([id, s]) => {
+    $('lista-' + id).addEventListener('change', ev => {
+      const i = ev.target; if (i.type !== 'checkbox') return;
+      const k = i.value; let v = s.get().slice();
+      if (i.checked) {
+        if (id === 'procs') { if (GRUPOS[k]) v = v.filter(x => !GRUPOS[k].ids.includes(x)); else v = v.filter(x => !(GRUPOS[x] && GRUPOS[x].ids.includes(k))); }
+        if (!v.includes(k)) v.push(k);
+      } else v = v.filter(x => x !== k);
+      s.set(v); cambioManual();
+    });
+    $('chips-' + id).addEventListener('click', ev => {
+      const b = ev.target.closest('button[data-k]'); if (!b) return;
+      s.set(s.get().filter(x => x !== b.dataset.k)); cambioManual(); $('abrir-' + id).focus();
+    });
+    $('abrir-' + id).addEventListener('click', () => alternarLista(id));
+    $('sel-' + id).addEventListener('click', ev => { if (ev.target === $('sel-' + id) || ev.target.classList.contains('vacio') || ev.target.classList.contains('pchip')) alternarLista(id, true); });
+  });
   $('f-cant').addEventListener('change', ev => { q.cantidad = ev.target.value || null; cambioManual(); });
-  $('f-prov').addEventListener('change', ev => { q.prov = ev.target.value || null; cambioManual(); });
   $('f-insitu').addEventListener('change', ev => { q.insitu = ev.target.checked; cambioManual(); });
   const leerNum = v => { const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) || n <= 0 ? null : n; };
   $('f-esp').addEventListener('input', ev => { q.espesor = leerNum(ev.target.value); cambioManual(); });
