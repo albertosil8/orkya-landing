@@ -297,6 +297,37 @@ footer .logo{height:24px}
   .lista-prov label{font-size:.92rem}
 }
 
+/* v4: panel Afinar junto a los resultados */
+.res-grid{display:grid;grid-template-columns:260px minmax(0,1fr);gap:1.75rem;align-items:start}
+.afinar{position:sticky;top:1rem}
+.afinar-caja{background:var(--fondo-alt);border:1px solid var(--linea);border-radius:8px;padding:.9rem 1rem}
+.afinar-caja > summary{display:flex;justify-content:space-between;align-items:baseline;list-style:none;cursor:default;font-family:"Barlow Semi Condensed",sans-serif;font-weight:600;font-size:1.25rem}
+.afinar-caja > summary::-webkit-details-marker{display:none}
+.afinar-caja > summary .limpiar{font-family:"Barlow",sans-serif;font-size:.88rem;font-weight:600}
+.af-cuerpo{display:grid;gap:.8rem;margin-top:.8rem}
+.af-cuerpo #af-params{display:grid;gap:.8rem}
+.af-cuerpo #af-params:empty{display:none}
+.af-nota{margin:0;font-size:.88rem;color:var(--texto-suave)}
+.dims{display:flex;align-items:center;gap:.3rem}
+.dims input{min-width:0;flex:1;padding-inline:.35rem;font-size:.95rem}
+.dims span{color:var(--texto-suave)}
+.cert > summary{cursor:pointer;color:var(--petroleo);font-weight:600;font-size:.95rem}
+.cert-n{font-size:.8rem;font-weight:600;color:var(--texto-suave);margin-left:.3rem}
+.lista-cert{display:grid;gap:.15rem;margin-top:.5rem}
+.lista-cert label{display:flex;gap:.5rem;align-items:flex-start;font-size:.92rem;cursor:pointer;line-height:1.3}
+.lista-cert input{accent-color:var(--petroleo);width:1.05rem;height:1.05rem;flex:none;margin-top:.1rem}
+.buscador .texto-libre{margin-top:.25rem;border-top:1px solid var(--linea);padding-top:.6rem}
+.buscador .texto-libre summary{padding:.25rem 0}
+.buscador .texto-libre .caja{display:flex;gap:.6rem;align-items:stretch;margin-top:.6rem}
+.buscador .texto-libre textarea{flex:1;min-width:0;resize:vertical;border:1px solid var(--linea);background:var(--tarjeta);border-radius:4px;padding:.6rem .8rem}
+@media (max-width:820px){
+  .res-grid{grid-template-columns:1fr;gap:1rem}
+  .afinar{position:static}
+  .afinar-caja > summary{cursor:pointer;list-style:disclosure-closed}
+  .afinar-caja[open] > summary{list-style:disclosure-open}
+  .buscador .texto-libre .caja{flex-direction:column}
+}
+
 </style>
 </head>
 <body>
@@ -313,7 +344,7 @@ footer .logo{height:24px}
     <section class="buscador" aria-labelledby="t-buscar">
       <div class="wrap">
         <h1 id="t-buscar">¿Qué necesitas fabricar?</h1>
-        <p class="intro">Elige proceso, material y provincia. Puedes marcar varios.</p>
+        <p class="intro">Elige proceso, material y provincia. Puedes marcar varios; lo específico lo afinas después.</p>
 
         <form class="caja-busqueda" id="form-busqueda" role="search" aria-label="Buscar empresas">
           <div class="campo-g" id="campo-procs">
@@ -341,23 +372,15 @@ footer .logo{height:24px}
             <div class="lista-procs lista-prov" id="lista-prov" hidden></div>
           </div>
 
-          <details class="mas" id="mas">
-            <summary>Más opciones</summary>
-            <div class="f-grid">
-              <div class="campo"><label for="f-cant">Cantidad (unidades)</label><select id="f-cant"></select></div>
-              <div class="campo" id="campo-esp" hidden><label for="f-esp">Espesor de chapa (mm)</label><input type="number" id="f-esp" min="0" step="0.5" inputmode="decimal" placeholder="Por ejemplo, 3"></div>
-              <div class="campo" id="campo-diam" hidden><label for="f-diam">Diámetro de la pieza (mm)</label><input type="number" id="f-diam" min="0" step="1" inputmode="decimal" placeholder="Por ejemplo, 200"></div>
-              <div class="campo"><span class="lbl">Lugar de trabajo</span><label class="check-campo"><input type="checkbox" id="f-insitu"> Que trabaje en mis instalaciones</label></div>
+          <details class="texto-libre" id="texto-libre">
+            <summary>O descríbelo con tus palabras <span class="beta">en pruebas</span></summary>
+            <div class="caja">
+              <label class="sr" for="q">Describe lo que necesitas</label>
+              <textarea id="q" rows="2" placeholder="Por ejemplo: engranajes de acero inoxidable en Valencia"></textarea>
+              <button class="btn btn-sec" type="button" id="btn-texto">Rellenar filtros</button>
             </div>
-            <div class="texto-libre" id="texto-libre">
-              <label for="q">O descríbelo con tus palabras <span class="beta">en pruebas</span></label>
-              <div class="caja">
-                <textarea id="q" rows="2" placeholder="Por ejemplo: engranajes de acero inoxidable en Valencia"></textarea>
-                <button class="btn btn-sec" type="button" id="btn-texto">Rellenar filtros</button>
-              </div>
-              <div class="ejemplos" id="ejemplos"><span>Prueba con:</span></div>
-              <p class="entendido" id="entendido" aria-live="polite"></p>
-            </div>
+            <div class="ejemplos" id="ejemplos"><span>Prueba con:</span></div>
+            <p class="entendido" id="entendido" aria-live="polite"></p>
           </details>
 
           <button class="btn btn-prim btn-buscar" type="submit" id="btn-buscar">Buscar</button>
@@ -368,9 +391,26 @@ footer .logo{height:24px}
     </section>
 
     <section class="resultados" id="resultados" aria-labelledby="t-res" hidden>
-      <div class="wrap">
-        <div class="res-cab"><h2 id="t-res" tabindex="-1">Empresas que encajan</h2><p id="res-resumen" aria-live="polite"></p></div>
-        <div id="res-cuerpo"></div>
+      <div class="wrap res-grid">
+        <aside class="afinar" aria-labelledby="t-afinar">
+          <details class="afinar-caja" id="afinar-caja" open>
+            <summary><span id="t-afinar">Afinar</span><button type="button" class="limpiar" id="af-limpiar">Quitar</button></summary>
+            <div class="af-cuerpo">
+              <div class="campo"><label for="af-cant">Cantidad (unidades)</label><input type="number" id="af-cant" min="1" step="1" inputmode="numeric" placeholder="Por ejemplo, 200"></div>
+              <div id="af-params"></div>
+              <p class="af-nota" id="af-vacio">Elige un proceso y aquí aparecerán sus medidas.</p>
+              <label class="check-campo"><input type="checkbox" id="af-insitu"> Que trabaje en mis instalaciones</label>
+              <details class="cert">
+                <summary>Certificaciones <span class="cert-n" id="cert-resumen"></span></summary>
+                <div class="lista-cert" id="lista-cert"></div>
+              </details>
+            </div>
+          </details>
+        </aside>
+        <div class="res-col">
+          <div class="res-cab"><h2 id="t-res" tabindex="-1">Empresas que encajan</h2><p id="res-resumen" aria-live="polite"></p></div>
+          <div id="res-cuerpo"></div>
+        </div>
       </div>
     </section>
   </div>
@@ -409,47 +449,83 @@ footer .logo{height:24px}
 (() => {
   'use strict';
   // ---------- Vocabulario controlado ----------
+  // Parámetros propios de cada proceso (nunca más de tres). t: tipo de control; f: campo de la capacidad del proveedor.
+  const PARAMS = {
+    espesor:{l:'Espesor de chapa (mm)', c:'Espesor', t:'esp', f:'esp'},
+    diametro:{l:'Diámetro de la pieza (mm)', c:'Ø', t:'num', f:'diam', u:'mm'},
+    longitud:{l:'Longitud de la pieza (mm)', c:'Longitud', t:'num', f:'long', u:'mm'},
+    longpleg:{l:'Longitud de plegado (mm)', c:'Longitud de plegado', t:'num', f:'long', u:'mm'},
+    modulo:{l:'Módulo del engranaje', c:'Módulo', t:'num', f:'modulo', u:''},
+    medida:{l:'Medida mayor de la pieza (mm)', c:'Medida', t:'num', f:'medida', u:'mm'},
+    ejes:{l:'Ejes', c:'Ejes', t:'min', f:'ejesMax', op:[['3','3 ejes'],['4','4 ejes'],['5','5 ejes']]},
+    dims:{l:'Medidas de la pieza (mm)', c:'Pieza', t:'dims', f:'dims'},
+    formato:{l:'Formato de chapa (mm)', c:'Chapa', t:'dims2', f:'formato'},
+    peso:{l:'Peso de la pieza (kg)', c:'Peso', t:'num', f:'peso', u:'kg'},
+    tonelaje:{l:'Tonelaje necesario (t)', c:'Prensa', t:'num', f:'tonelaje', u:'t'},
+    robot:{l:'Soldadura con robot', c:'Robot', t:'bool', f:'robot'},
+    tipo_rect:{l:'Tipo de rectificado', c:'Rectificado', t:'sel', f:'tipos', op:[['plano','Plano'],['cil_ext','Cilíndrico exterior'],['cil_int','Cilíndrico interior'],['sin_centros','Sin centros']]},
+    tipo_edm:{l:'Tipo de electroerosión', c:'Electroerosión', t:'sel', f:'tipos', op:[['hilo','Hilo'],['penetracion','Penetración']]},
+    tipo_pieza:{l:'Qué se curva', c:'Curva', t:'sel', f:'tipos', op:[['tubo','Tubo'],['perfil','Perfil']]},
+    tipo_tt:{l:'Tratamiento', c:'Tratamiento', t:'sel', f:'tipos', op:[['temple','Temple y revenido'],['cementacion','Cementación'],['nitruracion','Nitruración'],['recocido','Recocido'],['normalizado','Normalizado']]},
+    tec_fund:{l:'Tecnología de fundición', c:'Fundición', t:'sel', f:'tipos', op:[['arena','Arena'],['coquilla','Coquilla'],['inyeccion','Inyección'],['cera','Cera perdida']]},
+    tipo_mont:{l:'Tipo de montaje', c:'Montaje', t:'sel', f:'tipos', op:[['mecanico','Mecánico'],['electrico','Eléctrico'],['ambos','Mecánico y eléctrico']]},
+    tec_3d:{l:'Tecnología 3D', c:'3D', t:'sel', f:'tipos', op:[['fdm','FDM'],['sla','SLA'],['sls','SLS'],['metal','Metal']]}
+  };
+  const TIPOS_L = {};
+  Object.values(PARAMS).forEach(p => (p.op || []).forEach(([k, l]) => { TIPOS_L[k] = l; }));
+  TIPOS_L.recto = 'Rectos'; TIPOS_L.helicoidal = 'Helicoidales';
+
   const PROC = {
-    torneado:{l:'Torneado CNC', f:'Mecanizado'},
-    fresado:{l:'Fresado CNC', f:'Mecanizado'},
-    tallado:{l:'Tallado de engranajes', f:'Mecanizado'},
-    corte_laser:{l:'Corte láser de chapa', f:'Corte'},
-    corte_tubo:{l:'Corte láser de tubo', f:'Corte'},
-    corte_agua:{l:'Corte por agua', f:'Corte'},
-    plasma:{l:'Plasma y oxicorte', f:'Corte'},
-    plegado:{l:'Plegado', f:'Conformado'},
-    curvado:{l:'Curvado', f:'Conformado'},
-    punzonado:{l:'Punzonado', f:'Conformado'},
-    tig:{l:'Soldadura TIG', f:'Soldadura'},
-    mig:{l:'Soldadura MIG/MAG', f:'Soldadura'},
-    sold_laser:{l:'Soldadura láser', f:'Soldadura'},
-    calderia:{l:'Calderería y estructura metálica', f:'Calderería'},
-    pintura_polvo:{l:'Pintura en polvo', f:'Pintura y tratamientos'},
-    pintura_liq:{l:'Pintura líquida', f:'Pintura y tratamientos'},
-    galvanizado:{l:'Galvanizado', f:'Pintura y tratamientos'},
-    chorreado:{l:'Chorreado y granallado', f:'Pintura y tratamientos'},
-    montaje:{l:'Montaje', f:'Montaje'},
-    imp3d:{l:'Impresión 3D', f:'Impresión 3D'}
+    torneado:{l:'Torneado CNC', f:'Mecanizado', params:['diametro','longitud']},
+    fresado:{l:'Fresado CNC', f:'Mecanizado', params:['ejes','dims']},
+    tallado:{l:'Tallado de engranajes', f:'Mecanizado', params:['diametro','modulo']},
+    rectificado:{l:'Rectificado', f:'Mecanizado', params:['tipo_rect','medida']},
+    electroerosion:{l:'Electroerosión', f:'Mecanizado', params:['tipo_edm','dims']},
+    corte_laser:{l:'Corte láser de chapa', f:'Corte', params:['espesor','formato']},
+    corte_tubo:{l:'Corte láser de tubo', f:'Corte', params:['diametro','longitud']},
+    corte_agua:{l:'Corte por agua', f:'Corte', params:['espesor','formato']},
+    plasma:{l:'Plasma y oxicorte', f:'Corte', params:['espesor','formato']},
+    plegado:{l:'Plegado', f:'Conformado', params:['espesor','longpleg']},
+    curvado_tubo:{l:'Curvado de tubo y perfil', f:'Conformado', params:['tipo_pieza','diametro']},
+    cilindrado:{l:'Cilindrado de chapa', f:'Conformado', params:['espesor','longitud']},
+    punzonado:{l:'Punzonado', f:'Conformado', params:['espesor','formato']},
+    estampacion:{l:'Estampación', f:'Conformado', params:['tonelaje','espesor'], serie:true},
+    tig:{l:'Soldadura TIG', f:'Soldadura', params:['robot']},
+    mig:{l:'Soldadura MIG/MAG', f:'Soldadura', params:['robot']},
+    sold_laser:{l:'Soldadura láser', f:'Soldadura', params:['robot','espesor']},
+    pintura_polvo:{l:'Pintura en polvo', f:'Pintura', params:['dims','peso'], serie:true},
+    pintura_liq:{l:'Pintura líquida', f:'Pintura', params:['dims'], serie:true},
+    galvanizado:{l:'Galvanizado en caliente', f:'Tratamientos', params:['dims','peso'], serie:true},
+    cincado:{l:'Cincado electrolítico', f:'Tratamientos', params:['dims','peso'], serie:true},
+    anodizado:{l:'Anodizado', f:'Tratamientos', params:['dims'], serie:true},
+    chorreado:{l:'Chorreado y granallado', f:'Tratamientos', params:['dims'], serie:true},
+    trat_termico:{l:'Tratamientos térmicos', f:'Tratamientos', params:['tipo_tt','dims','peso'], serie:true},
+    calderia:{l:'Calderería y estructura metálica', f:'Calderería, fundición, montaje y 3D', params:['peso']},
+    fundicion:{l:'Fundición', f:'Calderería, fundición, montaje y 3D', params:['tec_fund','peso'], serie:true},
+    montaje:{l:'Montaje', f:'Calderería, fundición, montaje y 3D', params:['tipo_mont']},
+    imp3d:{l:'Impresión 3D', f:'Calderería, fundición, montaje y 3D', params:['tec_3d','dims']}
   };
   // Opciones «me da igual la tecnología» dentro de una familia
   const GRUPOS = {
     mecanizado:{l:'Mecanizado CNC (torneado o fresado)', corto:'Cualquier mecanizado CNC', f:'Mecanizado', ids:['torneado','fresado']},
     corte:{l:'Corte de chapa (cualquier tecnología)', corto:'Cualquier corte de chapa', f:'Corte', ids:['corte_laser','corte_agua','plasma']},
     soldadura:{l:'Soldadura (cualquier tipo)', corto:'Cualquier soldadura', f:'Soldadura', ids:['tig','mig','sold_laser']},
-    pintura:{l:'Pintura (polvo o líquida)', corto:'Cualquier pintura', f:'Pintura y tratamientos', ids:['pintura_polvo','pintura_liq']}
+    pintura:{l:'Pintura (polvo o líquida)', corto:'Cualquier pintura', f:'Pintura', ids:['pintura_polvo','pintura_liq']}
   };
   const FAMILIAS = [
-    {l:'Mecanizado', g:'mecanizado', ids:['torneado','fresado','tallado']},
+    {l:'Mecanizado', g:'mecanizado', ids:['torneado','fresado','tallado','rectificado','electroerosion']},
     {l:'Corte', g:'corte', ids:['corte_laser','corte_tubo','corte_agua','plasma']},
-    {l:'Conformado', ids:['plegado','curvado','punzonado']},
+    {l:'Conformado', ids:['plegado','curvado_tubo','cilindrado','punzonado','estampacion']},
     {l:'Soldadura', g:'soldadura', ids:['tig','mig','sold_laser']},
-    {l:'Pintura y tratamientos', g:'pintura', ids:['pintura_polvo','pintura_liq','galvanizado','chorreado']},
-    {l:'Calderería, montaje y 3D', ids:['calderia','montaje','imp3d']}
+    {l:'Pintura', g:'pintura', ids:['pintura_polvo','pintura_liq']},
+    {l:'Tratamientos', ids:['galvanizado','cincado','anodizado','chorreado','trat_termico']},
+    {l:'Calderería, fundición, montaje y 3D', ids:['calderia','fundicion','montaje','imp3d']}
   ];
-  const MAT = {carbono:'Acero al carbono', inox:'Acero inoxidable', aluminio:'Aluminio', bronce:'Bronce', laton:'Latón', plastico:'Plásticos técnicos'};
-  const CANT = {'1-10':'1–10', '10-100':'10–100', '100-1000':'100–1.000', '1000+':'Más de 1.000'};
-  const CON_ESPESOR = ['corte_laser','corte_agua','plasma','plegado','punzonado'];
-  const CON_DIAMETRO = ['torneado','corte_tubo','curvado'];
+  const MAT = {carbono:'Acero al carbono', inox:'Acero inoxidable', aluminio:'Aluminio', bronce:'Bronce', laton:'Latón', cobre:'Cobre', titanio:'Titanio', fundicion:'Fundición', plastico:'Plásticos técnicos'};
+  const CERT = {iso9001:'ISO 9001', iso14001:'ISO 14001', en1090:'EN 1090', en3834:'EN ISO 3834', iso9606:'Soldadores homologados EN ISO 9606', iatf:'IATF 16949', en9100:'EN 9100'};
+  const CANT = {'1-10':'1–10', '10-100':'10–100', '100-1000':'100–1.000', '1000+':'Más de 1.000', '1000-10000':'1.000–10.000', '10000+':'Más de 10.000'};
+  const bucketPieza = n => n <= 10 ? '1-10' : n <= 100 ? '10-100' : n <= 1000 ? '100-1000' : '1000+';
+  const bucketSerie = n => n < 10 ? null : n <= 100 ? '10-100' : n <= 1000 ? '100-1000' : n <= 10000 ? '1000-10000' : '10000+';
 
   // Provincias (capital como referencia para la distancia)
   const PROV = {
@@ -490,170 +566,222 @@ footer .logo{height:24px}
 
   // ---------- Empresas de ejemplo (inventadas) ----------
   const TODAS = ['1-10','10-100','100-1000','1000+'];
+  const TODAS_SERIE = ['10-100','100-1000','1000-10000','10000+'];
   const EMPRESAS = [
     {id:'ebrex', n:'Láser Ebrex', loc:'Zaragoza', prov:'Zaragoza', c:[41.66,-0.86], tipo:'Empresa', plantilla:'25–50 personas',
      desc:'Fabricación de piezas de chapa a medida: corte láser, plegado y soldadura. Trabajan sobre plano del cliente, de prototipo a series medias.',
-     modo:['taller'], cert:['ISO 9001'], conf:true, act:'09/2026',
+     modo:['taller'], cert:['iso9001'], conf:true, act:'09/2026',
      procs:[
-      {p:'corte_laser', mat:['carbono','inox','aluminio'], esp:{carbono:20,inox:15,aluminio:12}, formato:'3.000 × 1.500 mm', cant:TODAS, maq:'Láser de fibra de 6 kW'},
-      {p:'plegado', mat:['carbono','inox','aluminio'], esp:{carbono:10,inox:8,aluminio:8}, formato:'Longitud de plegado hasta 4.000 mm', cant:['1-10','10-100','100-1000'], maq:'Plegadora CNC de 220 t'},
-      {p:'tig', mat:['inox','aluminio'], cant:['1-10','10-100','100-1000'], maq:'4 puestos TIG'},
-      {p:'mig', mat:['carbono'], cant:['1-10','10-100','100-1000']}
+      {p:'corte_laser', mat:['carbono','inox','aluminio'], esp:{carbono:20,inox:15,aluminio:12}, formato:[3000,1500], cant:TODAS, maq:'Láser de fibra de 6 kW'},
+      {p:'plegado', mat:['carbono','inox','aluminio'], esp:{carbono:10,inox:8,aluminio:8}, long:4000, cant:['1-10','10-100','100-1000'], maq:'Plegadora CNC de 220 t'},
+      {p:'tig', mat:['inox','aluminio'], robot:false, cant:['1-10','10-100','100-1000'], maq:'4 puestos TIG'},
+      {p:'mig', mat:['carbono'], robot:false, cant:['1-10','10-100','100-1000']}
      ]},
     {id:'moncayal', n:'Calderería Moncayal', loc:'Cuarte de Huerva', prov:'Zaragoza', c:[41.59,-0.93], tipo:'Empresa', plantilla:'10–25 personas',
-     desc:'Calderería y estructura metálica para industria. Cortan con plasma, pliegan y sueldan; también montan en las instalaciones del cliente.',
-     modo:['taller','in situ'], zona:'Aragón y Navarra', cert:['EN 1090 EXC2'], conf:false, act:'09/2026',
+     desc:'Calderería y estructura metálica para industria. Cortan con plasma, pliegan, cilindran y sueldan; también montan en las instalaciones del cliente.',
+     modo:['taller','in situ'], zona:'Aragón y Navarra', cert:['en1090'], certNota:'EN 1090 clase EXC2', conf:false, act:'09/2026',
      procs:[
-      {p:'plasma', mat:['carbono','inox'], esp:{carbono:40,inox:25}, formato:'6.000 × 2.000 mm', cant:['1-10','10-100']},
-      {p:'plegado', mat:['carbono','inox'], esp:{carbono:12,inox:8}, formato:'Longitud de plegado hasta 3.000 mm', cant:['1-10','10-100']},
-      {p:'mig', mat:['carbono'], cant:['1-10','10-100']},
-      {p:'tig', mat:['inox'], cant:['1-10','10-100']},
-      {p:'calderia', mat:['carbono','inox'], cant:['1-10','10-100']}
+      {p:'plasma', mat:['carbono','inox'], esp:{carbono:40,inox:25}, formato:[6000,2000], cant:['1-10','10-100']},
+      {p:'plegado', mat:['carbono','inox'], esp:{carbono:12,inox:8}, long:3000, cant:['1-10','10-100']},
+      {p:'cilindrado', mat:['carbono','inox'], esp:{carbono:12,inox:8}, long:2000, cant:['1-10','10-100'], maq:'Cilindradora de 3 rodillos'},
+      {p:'mig', mat:['carbono'], robot:false, cant:['1-10','10-100']},
+      {p:'tig', mat:['inox'], robot:false, cant:['1-10','10-100']},
+      {p:'calderia', mat:['carbono','inox'], peso:3000, cant:['1-10','10-100']}
      ]},
     {id:'turivel', n:'Mecanizados Turivel', loc:'Paterna', prov:'Valencia', c:[39.50,-0.44], tipo:'Empresa', plantilla:'10–25 personas',
      desc:'Mecanizado de precisión por arranque de viruta y tallado de engranajes. Series cortas y medias para maquinaria y automoción.',
-     modo:['taller'], cert:['ISO 9001'], conf:true, act:'09/2026',
+     modo:['taller'], cert:['iso9001'], conf:true, act:'09/2026',
      procs:[
-      {p:'torneado', mat:['carbono','inox','aluminio','bronce'], diam:350, formato:'Longitud hasta 1.000 mm', cant:['1-10','10-100','100-1000'], maq:'Tornos CNC con herramienta motorizada'},
-      {p:'fresado', mat:['carbono','inox','aluminio'], ejes:'3 y 4 ejes', formato:'Recorrido 1.000 × 500 × 500 mm', cant:['1-10','10-100','100-1000']},
-      {p:'tallado', mat:['carbono','inox','bronce'], formato:'Engranajes rectos y helicoidales hasta Ø 300 mm (módulo 6)', cant:['1-10','10-100','100-1000'], maq:'Talladora CNC por generación'}
+      {p:'torneado', mat:['carbono','inox','aluminio','bronce'], diam:350, long:1000, cant:['1-10','10-100','100-1000'], maq:'Tornos CNC con herramienta motorizada'},
+      {p:'fresado', mat:['carbono','inox','aluminio'], ejesMax:4, dims:[1000,500,500], cant:['1-10','10-100','100-1000']},
+      {p:'tallado', mat:['carbono','inox','bronce'], diam:300, modulo:6, tipos:['recto','helicoidal'], cant:['1-10','10-100','100-1000'], maq:'Talladora CNC por generación'}
      ]},
     {id:'albex', n:'Precisión Albex', loc:'Silla', prov:'Valencia', c:[39.36,-0.41], tipo:'Empresa', plantilla:'5–10 personas',
      desc:'Fresado en 5 ejes de piezas complejas y prototipos, sobre todo en aluminio y plásticos técnicos.',
      modo:['taller'], cert:[], conf:true, act:'08/2026',
      procs:[
-      {p:'fresado', mat:['aluminio','inox','plastico'], ejes:'5 ejes', formato:'Recorrido 650 × 520 × 475 mm', cant:['1-10','10-100']},
-      {p:'torneado', mat:['aluminio','inox','plastico'], diam:120, cant:['1-10','10-100']}
+      {p:'fresado', mat:['aluminio','inox','plastico'], ejesMax:5, dims:[650,520,475], cant:['1-10','10-100']},
+      {p:'torneado', mat:['aluminio','inox','plastico'], diam:120, long:400, cant:['1-10','10-100']}
      ]},
     {id:'vinadex', n:'Talleres Vinadex', loc:'Elda', prov:'Alicante', c:[38.48,-0.79], tipo:'Empresa', plantilla:'25–50 personas',
      desc:'Transformados de chapa en serie: corte láser, plegado y soldadura para mobiliario, maquinaria y envases.',
      modo:['taller'], cert:[], conf:true, act:'09/2026',
      procs:[
-      {p:'corte_laser', mat:['carbono','inox'], esp:{carbono:15,inox:8}, formato:'3.000 × 1.500 mm', cant:['10-100','100-1000','1000+']},
-      {p:'plegado', mat:['carbono','inox'], esp:{carbono:8,inox:6}, formato:'Longitud de plegado hasta 3.000 mm', cant:['10-100','100-1000','1000+']},
-      {p:'mig', mat:['carbono'], cant:['10-100','100-1000','1000+']},
-      {p:'tig', mat:['inox'], cant:['10-100','100-1000']}
+      {p:'corte_laser', mat:['carbono','inox'], esp:{carbono:15,inox:8}, formato:[3000,1500], cant:['10-100','100-1000','1000+']},
+      {p:'plegado', mat:['carbono','inox'], esp:{carbono:8,inox:6}, long:3000, cant:['10-100','100-1000','1000+']},
+      {p:'mig', mat:['carbono'], robot:true, cant:['10-100','100-1000','1000+'], maq:'Célula de soldadura robotizada'},
+      {p:'tig', mat:['inox'], robot:false, cant:['10-100','100-1000']}
      ]},
     {id:'ibral', n:'Recubrimientos Ibral', loc:'Ibi', prov:'Alicante', c:[38.63,-0.57], tipo:'Empresa', plantilla:'10–25 personas',
      desc:'Pintura en polvo y chorreado de piezas metálicas, desde unidades sueltas hasta grandes series.',
      modo:['taller'], cert:[], conf:true, act:'09/2026',
      procs:[
-      {p:'pintura_polvo', mat:['carbono','aluminio'], formato:'Piezas hasta 6.000 × 1.500 × 2.000 mm', cant:TODAS, maq:'Cabina y horno de polimerizado de 7 m'},
-      {p:'chorreado', mat:['carbono'], formato:'Piezas hasta 4.000 mm', cant:TODAS}
+      {p:'pintura_polvo', mat:['carbono','aluminio'], dims:[6000,1500,2000], peso:400, cant:TODAS_SERIE, maq:'Cabina y horno de polimerizado de 7 m'},
+      {p:'chorreado', mat:['carbono'], dims:[4000,1500,1500], cant:TODAS_SERIE}
      ]},
     {id:'elcora', n:'Lacados Elcora', loc:'Elche', prov:'Alicante', c:[38.27,-0.70], tipo:'Empresa', plantilla:'5–10 personas',
      desc:'Lacado en polvo y pintura líquida de piezas pequeñas y medianas.',
      modo:['taller'], cert:[], conf:false, act:'09/2026',
      procs:[
-      {p:'pintura_polvo', mat:['carbono','aluminio'], formato:'Piezas hasta 3.000 mm', cant:['1-10','10-100','100-1000']},
-      {p:'pintura_liq', mat:['carbono','aluminio','plastico'], cant:['1-10','10-100','100-1000']}
+      {p:'pintura_polvo', mat:['carbono','aluminio'], dims:[3000,1200,1800], peso:150, cant:['10-100','100-1000','1000-10000']},
+      {p:'pintura_liq', mat:['carbono','aluminio','plastico'], dims:[3000,1500,2000], cant:['10-100','100-1000']}
      ]},
     {id:'nerbal', n:'Soldaduras Nerbal', loc:'Basauri', prov:'Bizkaia', c:[43.24,-2.89], tipo:'Profesional autónomo', plantilla:'Autónomo con 2 ayudantes',
      desc:'Soldadura TIG de inoxidable y aluminio, y MIG de estructura. Trabajan en su taller y en planta del cliente.',
-     modo:['taller','in situ'], zona:'País Vasco, Cantabria y Navarra', cert:['Soldadores homologados EN ISO 9606'], conf:true, act:'09/2026',
+     modo:['taller','in situ'], zona:'País Vasco, Cantabria y Navarra', cert:['iso9606'], conf:true, act:'09/2026',
      procs:[
-      {p:'tig', mat:['inox','aluminio'], cant:['1-10','10-100']},
-      {p:'mig', mat:['carbono'], cant:['1-10','10-100']}
+      {p:'tig', mat:['inox','aluminio'], robot:false, cant:['1-10','10-100']},
+      {p:'mig', mat:['carbono'], robot:false, cant:['1-10','10-100']}
      ]},
     {id:'urolan', n:'Tornería Urolan', loc:'Azpeitia', prov:'Gipuzkoa', c:[43.18,-2.27], tipo:'Empresa', plantilla:'10–25 personas',
      desc:'Torneado de piezas grandes (ejes, rodillos y bridas de gran diámetro) y tallado de coronas y piñones.',
-     modo:['taller'], cert:['ISO 9001'], conf:true, act:'08/2026',
+     modo:['taller'], cert:['iso9001'], conf:true, act:'08/2026',
      procs:[
-      {p:'torneado', mat:['carbono','inox'], diam:900, formato:'Longitud hasta 4.000 mm', cant:['1-10','10-100'], maq:'Torno CNC de bancada larga'},
-      {p:'fresado', mat:['carbono'], ejes:'3 ejes', formato:'Recorrido 2.000 × 800 × 700 mm', cant:['1-10','10-100']},
-      {p:'tallado', mat:['carbono'], formato:'Engranajes grandes hasta Ø 800 mm (módulo 12)', cant:['1-10','10-100']}
+      {p:'torneado', mat:['carbono','inox'], diam:900, long:4000, cant:['1-10','10-100'], maq:'Torno CNC de bancada larga'},
+      {p:'fresado', mat:['carbono'], ejesMax:3, dims:[2000,800,700], cant:['1-10','10-100']},
+      {p:'tallado', mat:['carbono'], diam:800, modulo:12, tipos:['recto','helicoidal'], cant:['1-10','10-100']}
      ]},
     {id:'debarra', n:'Mecanizados Debarra', loc:'Eibar', prov:'Gipuzkoa', c:[43.18,-2.47], tipo:'Empresa', plantilla:'25–50 personas',
-     desc:'Mecanizado en 5 ejes y torneado para bienes de equipo y moldes.',
-     modo:['taller'], cert:['ISO 9001'], conf:false, act:'09/2026',
+     desc:'Mecanizado en 5 ejes, torneado y rectificado para bienes de equipo y moldes.',
+     modo:['taller'], cert:['iso9001'], conf:false, act:'09/2026',
      procs:[
-      {p:'fresado', mat:['carbono','inox','aluminio'], ejes:'5 ejes', formato:'Recorrido 1.200 × 800 × 600 mm', cant:['1-10','10-100','100-1000']},
-      {p:'torneado', mat:['carbono','inox','aluminio','laton'], diam:300, cant:['1-10','10-100','100-1000']}
+      {p:'fresado', mat:['carbono','inox','aluminio'], ejesMax:5, dims:[1200,800,600], cant:['1-10','10-100','100-1000']},
+      {p:'torneado', mat:['carbono','inox','aluminio','laton'], diam:300, long:800, cant:['1-10','10-100','100-1000']},
+      {p:'rectificado', mat:['carbono','inox'], tipos:['plano','cil_ext'], medida:1000, cant:['1-10','10-100']}
      ]},
     {id:'vallesta', n:'Tubo Vallesta', loc:'Terrassa', prov:'Barcelona', c:[41.56,2.01], tipo:'Empresa', plantilla:'10–25 personas',
-     desc:'Especialistas en tubo: corte láser, curvado y plegado de chapa fina.',
+     desc:'Especialistas en tubo: corte láser, curvado de tubo y perfil, y plegado de chapa fina.',
      modo:['taller'], cert:[], conf:true, act:'09/2026',
      procs:[
-      {p:'corte_tubo', mat:['carbono','inox','aluminio'], diam:220, formato:'Barras de hasta 6.500 mm', cant:['10-100','100-1000','1000+'], maq:'Láser de tubo con carga automática'},
-      {p:'curvado', mat:['carbono','inox'], diam:76, cant:['10-100','100-1000']},
-      {p:'plegado', mat:['carbono','inox'], esp:{carbono:6,inox:4}, formato:'Longitud de plegado hasta 2.500 mm', cant:['10-100','100-1000']}
+      {p:'corte_tubo', mat:['carbono','inox','aluminio'], diam:220, long:6500, cant:['10-100','100-1000','1000+'], maq:'Láser de tubo con carga automática'},
+      {p:'curvado_tubo', mat:['carbono','inox'], diam:76, tipos:['tubo','perfil'], cant:['10-100','100-1000'], maq:'Curvadora CNC con mandril'},
+      {p:'plegado', mat:['carbono','inox'], esp:{carbono:6,inox:4}, long:2500, cant:['10-100','100-1000']}
      ]},
     {id:'llobrex', n:'Chapa Llobrex', loc:'Martorell', prov:'Barcelona', c:[41.47,1.93], tipo:'Empresa', plantilla:'50–100 personas',
-     desc:'Transformados metálicos completos: corte láser, punzonado, plegado y soldadura, con montaje de conjuntos.',
-     modo:['taller'], cert:['ISO 9001'], conf:true, act:'09/2026',
+     desc:'Transformados metálicos completos: corte láser, punzonado, plegado y soldadura robotizada, con montaje de conjuntos.',
+     modo:['taller'], cert:['iso9001','iso14001'], conf:true, act:'09/2026',
      procs:[
-      {p:'corte_laser', mat:['carbono','inox','aluminio'], esp:{carbono:25,inox:20,aluminio:15}, formato:'4.000 × 2.000 mm', cant:TODAS, maq:'2 láseres de fibra'},
-      {p:'punzonado', mat:['carbono','inox','aluminio'], esp:{carbono:6,inox:4,aluminio:6}, cant:['100-1000','1000+']},
-      {p:'plegado', mat:['carbono','inox','aluminio'], esp:{carbono:8,inox:6,aluminio:6}, formato:'Longitud de plegado hasta 4.000 mm', cant:TODAS},
-      {p:'tig', mat:['inox'], cant:['1-10','10-100','100-1000']},
-      {p:'montaje', mat:['carbono','inox','aluminio'], cant:['10-100','100-1000']}
+      {p:'corte_laser', mat:['carbono','inox','aluminio'], esp:{carbono:25,inox:20,aluminio:15}, formato:[4000,2000], cant:TODAS, maq:'2 láseres de fibra'},
+      {p:'punzonado', mat:['carbono','inox','aluminio'], esp:{carbono:6,inox:4,aluminio:6}, formato:[2500,1250], cant:['100-1000','1000-10000']},
+      {p:'plegado', mat:['carbono','inox','aluminio'], esp:{carbono:8,inox:6,aluminio:6}, long:4000, cant:TODAS},
+      {p:'mig', mat:['carbono','inox'], robot:true, cant:['100-1000','1000+'], maq:'2 células de soldadura robotizada'},
+      {p:'tig', mat:['inox'], robot:false, cant:['1-10','10-100','100-1000']},
+      {p:'montaje', mat:['carbono','inox','aluminio'], tipos:['mecanico'], cant:['10-100','100-1000']}
      ]},
     {id:'henarex', n:'Estructuras Henarex', loc:'Alcalá de Henares', prov:'Madrid', c:[40.48,-3.36], tipo:'Empresa', plantilla:'10–25 personas',
      desc:'Estructura metálica, calderería y montaje en obra y en planta.',
-     modo:['taller','in situ'], zona:'Madrid, Guadalajara y Toledo', cert:['EN 1090 EXC2'], conf:true, act:'09/2026',
+     modo:['taller','in situ'], zona:'Madrid, Guadalajara y Toledo', cert:['en1090','iso9606'], certNota:'EN 1090 clase EXC2', conf:true, act:'09/2026',
      procs:[
-      {p:'calderia', mat:['carbono'], cant:['1-10','10-100']},
-      {p:'mig', mat:['carbono'], cant:['1-10','10-100']},
-      {p:'plasma', mat:['carbono'], esp:{carbono:30}, cant:['1-10','10-100']},
-      {p:'montaje', mat:['carbono'], cant:['1-10','10-100']}
+      {p:'calderia', mat:['carbono'], peso:8000, cant:['1-10','10-100']},
+      {p:'mig', mat:['carbono'], robot:false, cant:['1-10','10-100']},
+      {p:'plasma', mat:['carbono'], esp:{carbono:30}, formato:[6000,2000], cant:['1-10','10-100']},
+      {p:'montaje', mat:['carbono'], tipos:['mecanico','electrico','ambos'], cant:['1-10','10-100']}
      ]},
     {id:'tajuvel', n:'Galvanizados Tajuvel', loc:'Arganda del Rey', prov:'Madrid', c:[40.30,-3.44], tipo:'Empresa', plantilla:'25–50 personas',
      desc:'Galvanizado en caliente de estructura y piezas de acero, con chorreado previo si hace falta.',
-     modo:['taller'], cert:[], conf:true, act:'09/2026',
+     modo:['taller'], cert:['iso9001'], conf:true, act:'09/2026',
      procs:[
-      {p:'galvanizado', mat:['carbono'], formato:'Cuba de 7.000 × 1.600 × 2.800 mm', cant:TODAS},
-      {p:'chorreado', mat:['carbono'], formato:'Piezas hasta 7.000 mm', cant:TODAS}
+      {p:'galvanizado', mat:['carbono'], dims:[7000,1600,2800], peso:2500, cant:TODAS_SERIE, maq:'Cuba de 7.000 × 1.600 × 2.800 mm'},
+      {p:'chorreado', mat:['carbono'], dims:[7000,2000,2000], cant:TODAS_SERIE}
      ]},
     {id:'getavia', n:'Prototipos Getavia', loc:'Getafe', prov:'Madrid', c:[40.31,-3.73], tipo:'Empresa', plantilla:'5–10 personas',
      desc:'Prototipos rápidos en impresión 3D y fresado de aluminio y plástico.',
      modo:['taller'], cert:[], conf:false, act:'08/2026',
      procs:[
-      {p:'imp3d', mat:['plastico'], formato:'Piezas hasta 400 × 400 × 400 mm', cant:['1-10','10-100']},
-      {p:'fresado', mat:['aluminio','plastico'], ejes:'3 ejes', cant:['1-10','10-100']}
+      {p:'imp3d', mat:['plastico'], tipos:['fdm','sla'], dims:[400,400,400], cant:['1-10','10-100']},
+      {p:'fresado', mat:['aluminio','plastico'], ejesMax:3, dims:[600,400,300], cant:['1-10','10-100']}
+     ]},
+    {id:'elgorri', n:'Rectificados Elgorri', loc:'Elgoibar', prov:'Gipuzkoa', c:[43.21,-2.41], tipo:'Empresa', plantilla:'10–25 personas',
+     desc:'Rectificado de precisión y electroerosión por hilo y penetración para utillaje, moldes y piezas templadas.',
+     modo:['taller'], cert:['iso9001'], conf:true, act:'09/2026',
+     procs:[
+      {p:'rectificado', mat:['carbono','inox','fundicion'], tipos:['plano','cil_ext','cil_int','sin_centros'], medida:1500, cant:['1-10','10-100','100-1000'], maq:'Rectificadoras planas y cilíndricas CNC'},
+      {p:'electroerosion', mat:['carbono','inox','aluminio','cobre','titanio'], tipos:['hilo','penetracion'], dims:[800,600,400], cant:['1-10','10-100'], maq:'2 máquinas de hilo y 1 de penetración'}
+     ]},
+    {id:'riberal', n:'Estampaciones Riberal', loc:'Tudela', prov:'Navarra', c:[42.06,-1.61], tipo:'Empresa', plantilla:'50–100 personas',
+     desc:'Estampación y punzonado de chapa en grandes series para automoción y electrodoméstico. Diseñan y fabrican sus propias matrices.',
+     modo:['taller'], cert:['iso9001','iatf'], conf:true, act:'09/2026',
+     procs:[
+      {p:'estampacion', mat:['carbono','inox','aluminio'], tonelaje:630, esp:{carbono:5,inox:3,aluminio:5}, cant:['1000-10000','10000+'], maq:'Prensas progresivas de 160 a 630 t'},
+      {p:'punzonado', mat:['carbono','inox','aluminio'], esp:{carbono:6,inox:4,aluminio:6}, formato:[2500,1250], cant:['100-1000','1000-10000','10000+']},
+      {p:'mig', mat:['carbono'], robot:true, cant:['1000+'], maq:'3 células robotizadas'}
+     ]},
+    {id:'segrex', n:'Fundiciones Segrex', loc:'Lleida', prov:'Lleida', c:[41.62,0.62], tipo:'Empresa', plantilla:'25–50 personas',
+     desc:'Fundición en arena y coquilla de aluminio, bronce y fundición gris, con mecanizado posterior de las piezas.',
+     modo:['taller'], cert:['iso9001'], conf:true, act:'08/2026',
+     procs:[
+      {p:'fundicion', mat:['aluminio','bronce','fundicion'], tipos:['arena','coquilla'], peso:500, cant:['10-100','100-1000','1000-10000'], maq:'Hornos de inducción y de crisol'},
+      {p:'fresado', mat:['aluminio','fundicion','bronce'], ejesMax:3, dims:[800,500,500], cant:['10-100','100-1000']}
+     ]},
+    {id:'vallesan', n:'Tratamientos Vallesán', loc:'Sabadell', prov:'Barcelona', c:[41.55,2.11], tipo:'Empresa', plantilla:'10–25 personas',
+     desc:'Tratamientos térmicos de piezas de acero y cincado electrolítico con pasivados. Trabajan para mecanizadores y estampadores de toda Cataluña.',
+     modo:['taller'], cert:['iso9001','iatf'], conf:true, act:'09/2026',
+     procs:[
+      {p:'trat_termico', mat:['carbono','fundicion'], tipos:['temple','cementacion','nitruracion','recocido'], dims:[1200,800,800], peso:1000, cant:['10-100','100-1000','1000-10000'], maq:'Hornos de atmósfera controlada y temple por inducción'},
+      {p:'cincado', mat:['carbono','fundicion'], dims:[2000,600,900], peso:200, cant:['100-1000','1000-10000','10000+'], maq:'Línea de bastidor y de tambor'}
+     ]},
+    {id:'turianod', n:'Anodizados Turia', loc:'Manises', prov:'Valencia', c:[39.49,-0.46], tipo:'Empresa', plantilla:'10–25 personas',
+     desc:'Anodizado y lacado de aluminio para carpintería industrial, iluminación y maquinaria.',
+     modo:['taller'], cert:['iso9001'], conf:false, act:'09/2026',
+     procs:[
+      {p:'anodizado', mat:['aluminio'], dims:[6500,800,1500], cant:TODAS_SERIE, maq:'Línea de anodizado de 6,5 m'},
+      {p:'pintura_polvo', mat:['aluminio'], dims:[6500,800,1500], peso:100, cant:TODAS_SERIE}
      ]}
   ];
 
   // Búsquedas de ejemplo que rellenan los filtros directamente
   const PRESETS = [
-    {l:'Chapa en Zaragoza', q:{procesos:['corte_laser','plegado','tig'], materiales:['inox'], espesor:3, cantidad:'100-1000', provs:['zaragoza']}},
-    {l:'Mecanizado en 4 provincias', q:{procesos:['mecanizado'], materiales:['aluminio','inox'], cantidad:'10-100', provs:['alicante','valencia','murcia','albacete']}},
+    {l:'Chapa en Zaragoza', q:{procesos:['corte_laser','plegado','tig'], materiales:['inox'], params:{espesor:3}, cantidad:200, provs:['zaragoza']}},
+    {l:'Mecanizado en 4 provincias', q:{procesos:['mecanizado'], materiales:['aluminio','inox'], cantidad:50, provs:['alicante','valencia','murcia','albacete']}},
     {l:'Engranajes de inoxidable', q:{procesos:['tallado'], materiales:['inox']}},
+    {l:'Soldadura con robot', q:{procesos:['soldadura'], materiales:['carbono'], params:{robot:true}, cantidad:5000}},
     {l:'Soldador que vaya a planta', q:{procesos:['soldadura'], insitu:true, provs:['navarra']}},
     {l:'Estructura galvanizada en Madrid', q:{procesos:['calderia','galvanizado'], materiales:['carbono'], provs:['madrid']}},
-    {l:'Quién trabaja inoxidable o aluminio', q:{materiales:['inox','aluminio']}}
+    {l:'Temple de ejes en Cataluña', q:{procesos:['trat_termico'], materiales:['carbono'], params:{tipo_tt:'temple'}, cantidad:300, provs:['barcelona','girona','lleida','tarragona']}}
   ];
   // Frases de ejemplo para el texto libre (dos con faltas a propósito)
   const EJEMPLOS = [
     'Busco una empresa que mecanice engranajes de acero inoxidable',
     '200 soportes de inox de 3 mm, cortados por láser, plegados y soldados, en Zaragoza',
-    'Soldadura TIG de inoxidable cerca de Bilbao',
+    'Soldadura MIG con robot para 5.000 piezas de acero',
     'Meanizado de aluminio en Valencia',
     'Pintura en polbo en Alicante para 100 piezas',
-    'Torno para piezas de 600 mm de diámetro en Gipuzkoa'
+    'Temple y revenido de 300 ejes de acero en Barcelona',
+    'Fundición de aluminio en coquilla, piezas de 20 kg'
   ];
 
   // ---------- Utilidades ----------
   const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   const fmtNum = n => n.toLocaleString('es-ES');
   const minus = s => s.charAt(0).toLowerCase() + s.slice(1);
+  const mayus = s => s.charAt(0).toUpperCase() + s.slice(1);
   const nombreProc = id => (PROC[id] || GRUPOS[id]).l;
   const famDe = id => (PROC[id] || GRUPOS[id]).f;
   const idsDe = id => GRUPOS[id] ? GRUPOS[id].ids : [id];
-  const vacio = () => ({procesos:[], materiales:[], espesor:null, diametro:null, cantidad:null, provs:[], insitu:false});
+  const vacio = () => ({procesos:[], materiales:[], provs:[], cantidad:null, insitu:false, certs:[], params:{}});
   const enumerar = (arr, sep = ' y ') => arr.length <= 1 ? arr.join('') : arr.slice(0, -1).join(', ') + sep + arr[arr.length - 1];
   const listaMat = ks => enumerar(ks.map(k => minus(MAT[k])), ' o ');
-  const mayus = s => s.charAt(0).toUpperCase() + s.slice(1);
-  const provDe = e => ALIAS[norm(e.prov)];
-  const necesita = (lista, procs) => procs.some(p => idsDe(p).some(x => lista.includes(x)));
-  const bucket = n => n <= 10 ? '1-10' : n <= 100 ? '10-100' : n <= 1000 ? '100-1000' : '1000+';
+  const dimsTxt = d => d.map(fmtNum).join(' × ');
+  // Parámetros que se preguntan para una selección de procesos: los propios de cada proceso; en un grupo, los comunes a sus miembros
+  function paramsDe(procesos){
+    const out = [];
+    procesos.forEach(p => {
+      let ks;
+      if (GRUPOS[p]) { const ls = GRUPOS[p].ids.map(x => PROC[x].params); ks = ls[0].filter(k => ls.every(l => l.includes(k))); }
+      else ks = PROC[p].params;
+      ks.forEach(k => { if (!out.includes(k)) out.push(k); });
+    });
+    return out;
+  }
+  const paramVacio = (k, v) => v == null || v === '' || v === false || (Array.isArray(v) && v.some(x => x == null || x === ''));
 
   // ---------- Texto libre → filtros ----------
-  // Palabras de oficio con las que se corrigen faltas de escritura
-  const VOCAB = ['mecanizado','mecanizados','mecanizar','torneado','tornear','fresado','fresadora','fresar','tallado','engranaje','engranajes','pinones',
-    'soldadura','soldar','soldado','soldados','soldadas','plegado','plegados','plegadas','plegar','curvado','curvar','punzonado','laser','plasma','oxicorte',
-    'calderia','caldereria','estructura','estructuras','pintura','pintar','pintado','polvo','lacado','galvanizado','galvanizada','galvanizar','chorreado','granallado',
-    'montaje','impresion','inoxidable','aluminio','bronce','laton','plastico','plasticos','acero','carbono','hierro','chapa','diametro','espesor','unidades',
-    'prototipo','prototipos','corte','cortar','cortado','cortados','cortadas','casquillos','bridas','rodillos','barandillas','escaleras','instalaciones'];
+  const VOCAB = ['mecanizado','mecanizados','mecanizar','torneado','tornear','fresado','fresadora','fresar','tallado','engranaje','engranajes','pinones','rectificado','rectificar','electroerosion',
+    'soldadura','soldar','soldado','soldados','soldadas','plegado','plegados','plegadas','plegar','curvado','curvar','cilindrado','cilindrar','virolas','punzonado','estampacion','estampado','laser','plasma','oxicorte',
+    'calderia','caldereria','estructura','estructuras','pintura','pintar','pintado','polvo','lacado','galvanizado','galvanizada','galvanizar','cincado','zincado','anodizado','chorreado','granallado',
+    'temple','templado','revenido','cementacion','nitruracion','recocido','tratamiento','tratamientos','termico','termicos','fundicion','fundido','coquilla','inyeccion',
+    'montaje','impresion','inoxidable','aluminio','bronce','laton','cobre','titanio','plastico','plasticos','acero','carbono','hierro','chapa','diametro','espesor','unidades',
+    'prototipo','prototipos','corte','cortar','cortado','cortados','cortadas','casquillos','bridas','rodillos','barandillas','escaleras','instalaciones','robot','robotizada','certificado'];
   const ALIAS = {};
   Object.entries(PROV).forEach(([k, v]) => { ALIAS[norm(v[0])] = k; });
   Object.assign(ALIAS, ALIAS_EXTRA);
@@ -661,18 +789,17 @@ footer .logo{height:24px}
   const ALIAS_PAL = new Set(Object.keys(ALIAS).flatMap(k => k.split(' ')));
   VOCAB.push(...Object.keys(ALIAS).filter(k => !k.includes(' ') && k.length >= 5));
   const VOCAB_SET = new Set(VOCAB);
-  // Palabras corrientes que se parecen a las de oficio y no hay que «corregir»
   const NO_CORREGIR = new Set(['corta','cortas','corto','cortos','serie','series','llegar','pegar','pagar','placa','placas','plazo','plazos','metal','metales',
-    'torre','torres','tuerca','tuercas','precio','precios','acera','pinta','pintas','grande','grandes','planos','plano','palas','salas','lados','montes']);
+    'torre','torres','tuerca','tuercas','precio','precios','acera','pinta','pintas','grande','grandes','planos','plano','palas','salas','lados','montes','templo','tiempo','tiempos']);
   const STOP = new Set(('a al alguien alrededor alrededores aqui busco buscamos buscando cantidad carcasa carcasas cerca como con conjunto conjuntos de del e el empresa empresas en esa ese eso esta este esto estos estas fabrica fabricacion fabricar fabrique fabriquen hace hacen hacer haga hagan la las le les lo los maquina maquinas me metalica metalicas metalico metalicos mi mis necesito necesitamos ni nos o para parte partes pieza piezas poder por provincia proveedor proveedores pueda puedan puede que queremos quien quiero se sin soporte soportes su sus taller talleres trabaje trabajen trabajar trabajo trabajos tu tus u un una unas uno unos y zona medida medidas hecho hecha hechos hechas tipo cualquier algo nuestra nuestro nuestras nuestros').split(' '));
-  const RECONOCE = /^(mecani|torn|fres|tall|engran|pinon|corona|cremaller|sold|pleg|curva|punzon|laser|plasma|oxicort|agua$|waterjet|cort|calder|estructur|pint|polvo|lacad|epoxi|liquid|galvaniz|chorre|granall|montaj|montar|impres|imprim|3d$|inox|alumin|bronce|laton|plastic|nylon|poliamida|delrin|peek$|teflon|pvc$|metacrilato|acero|hierro|carbono|chapa|tubo|diametro|espesor|mm$|ejes?$|casquill|bulon|brida|rodillo|barandill|escaler|bastidor|deposito|tolva|pasarela|cnc$|tig$|mig$|mag$|pom$|unidad|uds?$|serie|prototip|urgen|situ$|instalacion|obra$|planta$|desplaz|vengan?$|miles$|cientos$|larga$|media$|gran$|pequena$|sueltas?$|unica$|lotes?$|tirada|pedido|ø)/;
+  const RECONOCE = /^(mecani|torn|fres|tall|engran|pinon|corona|cremaller|rectif|electroero|erosion|hilo$|sold|pleg|curva|cilindr|virola|punzon|estamp|laser|plasma|oxicort|agua$|waterjet|cort|calder|estructur|pint|polvo|lacad|epoxi|liquid|galvaniz|cincad|zincad|anodiz|chorre|granall|templ|reven|cementa|nitrur|recoc|normaliz|gris$|nodular|tratam|termic|fundi|colada|coquilla|inyec|arena$|montaj|montar|impres|imprim|3d$|inox|alumin|bronce|laton|cobre|titanio|plastic|nylon|poliamida|delrin|peek$|teflon|pvc$|metacrilato|acero|hierro|carbono|chapa|tubo|perfil|diametro|espesor|mm$|kg$|ejes?$|casquill|bulon|brida|rodillo|barandill|escaler|bastidor|deposito|tolva|pasarela|cnc$|tig$|mig$|mag$|pom$|unidad|uds?$|serie|prototip|urgen|situ$|instalacion|obra$|planta$|desplaz|vengan?$|miles$|cientos$|larga$|media$|gran$|pequena$|sueltas?$|unica$|lotes?$|tirada|pedido|robot|certific|homolog|ø)/;
   const PIEZAS = [
     {re:/\b(engranaj\w*|pinon(es)?|coronas?|cremaller\w*)\b/, p:['tallado']},
     {re:/\b(ejes?|casquillos?|bulon(es)?|rodillos?|bridas?)\b/, p:['torneado']},
-    {re:/\b(barandillas?|escaleras?|bastidor(es)?|depositos?|tolvas?|pasarelas?)\b/, p:['calderia']}
+    {re:/\b(barandillas?|escaleras?|bastidor(es)?|depositos?|tolvas?|pasarelas?)\b/, p:['calderia']},
+    {re:/\b(virolas?)\b/, p:['cilindrado']}
   ];
 
-  // Distancia de edición (Damerau, versión OSA)
   function distancia(a, b){
     if (Math.abs(a.length - b.length) > 2) return 9;
     const d = Array.from({length:a.length + 1}, (_, i) => [i, ...Array(b.length).fill(0)]);
@@ -704,10 +831,11 @@ footer .logo{height:24px}
     const add = (p, m) => { if (!q.procesos.includes(p)) q.procesos.push(p); if (m && !motivo[p]) motivo[p] = m; };
     const origDe = re => { for (let i = 0; i < toks.length; i++) if (re.test(' ' + toks[i] + ' ')) return orig[i]; return null; };
     const hay = f => q.procesos.some(p => famDe(p) === f);
+    let m;
 
     const reSoldLaser = /\bsold\w* (por |con |a )?laser\b/g;
     if (reSoldLaser.test(s)) { add('sold_laser'); s = s.replace(reSoldLaser, ' '); }
-    const hayTubo = /\btubos?\b/.test(s), hayChapa = /\bchapas?\b/.test(s);
+    const hayTubo = /\btubos?\b/.test(s), hayChapa = /\bchapas?\b/.test(s), hayPerfil = /\bperfil(es)?\b/.test(s);
     if (/\blaser\b/.test(s)) { if (hayTubo) add('corte_tubo'); if (!hayTubo || hayChapa) add('corte_laser'); }
     if (/\b(cort\w*|chorro) (por |con |de |al )?agua\b|\bwaterjet\b/.test(s)) add('corte_agua');
     if (/\bplasma\b|\boxicort\w*/.test(s)) add('plasma');
@@ -715,12 +843,13 @@ footer .logo{height:24px}
     if (/\btorn(o|os|ao|ea\w*|er\w*)\b/.test(s)) add('torneado');
     if (/\bfres(a|ao|ar)\w*|\b(3|4|5|tres|cuatro|cinco) ejes\b/.test(s)) add('fresado');
     if (/\btallad\w*|\btallar\b/.test(s)) add('tallado');
-    const sinEjesMaquina = s.replace(/\b(3|4|5|tres|cuatro|cinco) ejes\b/g, ' ');
-    PIEZAS.forEach(pz => { if (pz.re.test(sinEjesMaquina)) pz.p.forEach(p => add(p, 'por «' + (origDe(pz.re) || '') + '»')); });
-    if (!hay('Mecanizado') && /\bmecani[zcs]\w*/.test(s)) add('mecanizado');
+    if (/\brectific\w*/.test(s)) add('rectificado');
+    if (/\belectroero\w*|\berosion\b|\bpor hilo\b/.test(s)) add('electroerosion');
     if (/\bpleg\w*/.test(s)) add('plegado');
-    if (/\bcurva(do|da|dos|das|r)\b/.test(s)) add('curvado');
+    if (/\bcilindr\w*/.test(s) || (/\bcurva\w*/.test(s) && hayChapa && !hayTubo)) add('cilindrado');
+    else if (/\bcurva(do|da|dos|das|r)\b/.test(s)) add('curvado_tubo');
     if (/\bpunzon\w*/.test(s)) add('punzonado');
+    if (/\bestamp\w*/.test(s)) add('estampacion');
     if (/\btig\b/.test(s)) add('tig');
     if (/\b(mig|mag)\b/.test(s)) add('mig');
     if (!hay('Soldadura') && /\bsold\w*/.test(s)) add('soldadura');
@@ -729,49 +858,74 @@ footer .logo{height:24px}
     if (/\bliquida\b/.test(s)) add('pintura_liq');
     if (!q.procesos.some(p => ['pintura_polvo','pintura_liq'].includes(p)) && /\bpint\w*/.test(s)) add('pintura');
     if (/\bgalvaniz\w*/.test(s)) add('galvanizado');
+    if (/\b[cz]incad\w*/.test(s)) add('cincado');
+    if (/\banodiz\w*/.test(s)) add('anodizado');
     if (/\bchorre\w*|\bgranall\w*/.test(s)) add('chorreado');
+    if (/\btempl(e|ad\w*)\b|\bcementa\w*|\bnitrur\w*|\brecocid\w*|\bnormalizad\w*|\btratamientos? termicos?\b/.test(s)) add('trat_termico');
+    if (/\bfundi(cion|ciones|do|das|r)\b|\bcolada\b|\bcoquilla\b/.test(s) && !/\bfundicion (gris|nodular)\b|\bhierro fundido\b/.test(s.replace(/\bfundicion (de|en)\b/, ''))) add('fundicion');
     if (/\bmontaj\w*|\bmontar\b/.test(s)) add('montaje');
     if (/\b3d\b|\bimprimir\b/.test(s)) add('imp3d');
+    // Piezas habituales → proceso, solo cuando el texto no nombra ningún proceso
+    const sinEjesMaquina = s.replace(/\b(3|4|5|tres|cuatro|cinco) ejes\b/g, ' ');
+    if (!q.procesos.length) PIEZAS.forEach(pz => { if (pz.re.test(sinEjesMaquina)) pz.p.forEach(p => add(p, 'por «' + (origDe(pz.re) || '') + '»')); });
+    if (!hay('Mecanizado') && /\bmecani[zcs]\w*/.test(s)) add('mecanizado');
     if (!q.procesos.length && /\bcnc\b/.test(s)) add('mecanizado');
 
     if (/\binox\w*/.test(s)) q.materiales.push('inox');
     if (/\balumin\w*/.test(s)) q.materiales.push('aluminio');
     if (/\bbronce\b/.test(s)) q.materiales.push('bronce');
     if (/\blaton\b/.test(s)) q.materiales.push('laton');
+    if (/\bcobre\b/.test(s)) q.materiales.push('cobre');
+    if (/\btitanio\b/.test(s)) q.materiales.push('titanio');
+    if (/\bfundicion (gris|nodular)\b|\bhierro fundido\b|\bpiezas? de fundicion\b/.test(s)) q.materiales.push('fundicion');
     if (/\bplastic\w*|\b(nylon|poliamida|pom|delrin|peek|teflon|pvc|metacrilato)\b/.test(s)) q.materiales.push('plastico');
-    if (/\bacero (al )?carbono\b|\bhierro\w*|\bcarbono\b/.test(s) || (/\bacero\w*/.test(s) && !/\bacero inox\w*/.test(s))) q.materiales.push('carbono');
+    if (/\bacero (al )?carbono\b|\bhierro\b|\bcarbono\b/.test(s) || (/\bacero\w*/.test(s) && !/\bacero inox\w*/.test(s))) q.materiales.push('carbono');
 
-    let m;
+    // Parámetros
     const reMm = /(\d+(?:[.,]\d+)?)\s*mm\b/g;
     while ((m = reMm.exec(s))) {
       const v = parseFloat(m[1].replace(',', '.'));
       const antes = s.slice(Math.max(0, m.index - 25), m.index), despues = s.slice(m.index, m.index + m[0].length + 16);
-      if (/diametro|ø/.test(antes) || /de diametro/.test(despues)) { if (q.diametro == null) q.diametro = v; }
-      else if (v <= 40 && q.espesor == null) q.espesor = v;
+      if (/diametro|ø/.test(antes) || /de diametro/.test(despues)) { if (q.params.diametro == null) q.params.diametro = v; }
+      else if (v <= 40 && q.params.espesor == null) q.params.espesor = v;
     }
-    if (q.diametro == null && (m = /(diametro|ø)\s*(de\s*)?(\d+(?:[.,]\d+)?)/.exec(s))) q.diametro = parseFloat(m[3].replace(',', '.'));
-    if (q.espesor == null && (m = /espesor\s*(de\s*)?(\d+(?:[.,]\d+)?)/.exec(s))) q.espesor = parseFloat(m[2].replace(',', '.'));
+    if (q.params.diametro == null && (m = /(diametro|ø)\s*(de\s*)?(\d+(?:[.,]\d+)?)/.exec(s))) q.params.diametro = parseFloat(m[3].replace(',', '.'));
+    if (q.params.espesor == null && (m = /espesor\s*(de\s*)?(\d+(?:[.,]\d+)?)/.exec(s))) q.params.espesor = parseFloat(m[2].replace(',', '.'));
+    if ((m = /(\d+(?:[.,]\d+)?)\s*(kg|kilos?)\b/.exec(s))) q.params.peso = parseFloat(m[1].replace(',', '.'));
+    if ((m = /\b(3|4|5|tres|cuatro|cinco) ejes\b/.exec(s))) q.params.ejes = {tres:'3', cuatro:'4', cinco:'5'}[m[1]] || m[1];
+    if (/\brobot\w*/.test(s)) q.params.robot = true;
+    if (/\bhilo\b/.test(s)) q.params.tipo_edm = 'hilo'; else if (/\bpenetracion\b/.test(s)) q.params.tipo_edm = 'penetracion';
+    if (/\btempl\w*/.test(s)) q.params.tipo_tt = 'temple'; else if (/\bcementa\w*/.test(s)) q.params.tipo_tt = 'cementacion'; else if (/\bnitrur\w*/.test(s)) q.params.tipo_tt = 'nitruracion'; else if (/\brecocid\w*/.test(s)) q.params.tipo_tt = 'recocido';
+    if (/\bcoquilla\b/.test(s)) q.params.tec_fund = 'coquilla'; else if (/\barena\b/.test(s)) q.params.tec_fund = 'arena'; else if (/\binyec\w*/.test(s)) q.params.tec_fund = 'inyeccion'; else if (/\bcera perdida\b/.test(s)) q.params.tec_fund = 'cera';
+    if (q.procesos.includes('curvado_tubo')) q.params.tipo_pieza = hayPerfil && !hayTubo ? 'perfil' : 'tubo';
+    if (/\bsin centros\b/.test(s)) q.params.tipo_rect = 'sin_centros'; else if (/\bcilindric\w* interior\b/.test(s)) q.params.tipo_rect = 'cil_int'; else if (/\bcilindric\w*/.test(s) && q.procesos.includes('rectificado')) q.params.tipo_rect = 'cil_ext'; else if (/\brectificado plano\b|\bplano\b/.test(s) && q.procesos.includes('rectificado')) q.params.tipo_rect = 'plano';
+    if ((m = /\b(fdm|sla|sls)\b/.exec(s))) q.params.tec_3d = m[1]; else if (/\b3d\b.*\bmetal\b/.test(s)) q.params.tec_3d = 'metal';
 
     let cantTxt = null;
-    const reCant = /\b(\d{1,3}(?:\.\d{3})+|\d+)\s+(?!(mm|cm|m|metros?|ejes|kw|km|kg|t|toneladas?|de diametro|dias?|semanas?|mes|meses|horas?|anos?|euros?|eur)\b)([a-z]+)/g;
+    const reCant = /\b(\d{1,3}(?:\.\d{3})+|\d+)\s+(?!(mm|cm|m|metros?|ejes|kw|km|kg|kilos?|t|toneladas?|de diametro|dias?|semanas?|mes|meses|horas?|anos?|euros?|eur)\b)([a-z]+)/g;
     while ((m = reCant.exec(s))) {
       const n = parseInt(m[1].replace(/\./g, ''), 10);
-      if (n > 0) { q.cantidad = bucket(n); cantTxt = fmtNum(n); break; }
+      if (n > 0) { q.cantidad = n; cantTxt = fmtNum(n); break; }
     }
-    if (!q.cantidad && (m = /\b(lotes?|series?|tiradas?|pedidos?) de (\d{1,3}(?:\.\d{3})+|\d+)\b/.exec(s))) { const n = parseInt(m[2].replace(/\./g, ''), 10); if (n > 0) { q.cantidad = bucket(n); cantTxt = fmtNum(n); } }
+    if (!q.cantidad && (m = /\b(lotes?|series?|tiradas?|pedidos?) de (\d{1,3}(?:\.\d{3})+|\d+)\b/.exec(s))) { const n = parseInt(m[2].replace(/\./g, ''), 10); if (n > 0) { q.cantidad = n; cantTxt = fmtNum(n); } }
     if (!q.cantidad) {
-      if ((m = /serie corta|pocas unidades|pequena serie/.exec(s))) { q.cantidad = '10-100'; cantTxt = m[0]; }
-      else if ((m = /prototipos?|una pieza|una unidad|pieza unica|unidades sueltas/.exec(s))) { q.cantidad = '1-10'; cantTxt = m[0]; }
-      else if ((m = /serie media|cientos/.exec(s))) { q.cantidad = '100-1000'; cantTxt = m[0]; }
-      else if ((m = /gran serie|serie larga|miles/.exec(s))) { q.cantidad = '1000+'; cantTxt = m[0]; }
+      if ((m = /serie corta|pocas unidades|pequena serie/.exec(s))) { q.cantidad = 50; cantTxt = m[0]; }
+      else if ((m = /prototipos?|una pieza|una unidad|pieza unica|unidades sueltas/.exec(s))) { q.cantidad = 1; cantTxt = m[0]; }
+      else if ((m = /serie media|cientos/.exec(s))) { q.cantidad = 500; cantTxt = m[0]; }
+      else if ((m = /gran serie|serie larga|miles/.exec(s))) { q.cantidad = 5000; cantTxt = m[0]; }
     }
     let sProv = s;
     for (const [re, k, txt] of ALIAS_ORD) if (re.test(sProv)) { if (!q.provs.includes(k)) q.provs.push(k); sProv = sProv.replace(new RegExp('(^| )' + txt + '( |$)', 'g'), ' '); }
     if (/\bin situ\b|\ben (mis|nuestras|sus|las) instalaciones\b|\ben (obra|planta)\b|\bdesplaz\w*|\bque vengan?\b/.test(s)) q.insitu = true;
+    if (/\biso ?9001\b/.test(s)) q.certs.push('iso9001');
+    if (/\ben ?1090\b/.test(s)) q.certs.push('en1090');
+    if (/\biatf\b/.test(s)) q.certs.push('iatf');
+    if (/\bhomologad\w*/.test(s)) q.certs.push('iso9606');
     const plazo = /\burgen\w*|cuanto antes|lo antes posible/.test(s);
 
-    if (!necesita(CON_ESPESOR, q.procesos)) q.espesor = null;
-    if (!necesita(CON_DIAMETRO, q.procesos)) q.diametro = null;
+    // Solo se conservan los parámetros que alguno de los procesos elegidos pregunta
+    const pks = paramsDe(q.procesos);
+    Object.keys(q.params).forEach(k => { if (!pks.includes(k)) delete q.params[k]; });
 
     const noReconocido = [];
     toks.forEach((t, i) => {
@@ -785,6 +939,35 @@ footer .logo{height:24px}
   const rad = d => d * Math.PI / 180;
   function km(a, b){ const R = 6371, dLa = rad(b[0]-a[0]), dLo = rad(b[1]-a[1]); const x = Math.sin(dLa/2)**2 + Math.cos(rad(a[0]))*Math.cos(rad(b[0]))*Math.sin(dLo/2)**2; return Math.round(2*R*Math.asin(Math.sqrt(x))); }
   const coordProv = k => [PROV[k][1], PROV[k][2]];
+  const provDe = e => ALIAS[norm(e.prov)];
+  const cabe = (pieza, hueco) => { const a = [...pieza].sort((x, y) => y - x), b = [...hueco].sort((x, y) => y - x); return a.every((v, i) => v <= b[i]); };
+
+  // Comprueba un parámetro pedido contra una capacidad. ok: true / false / null (sin dato)
+  function evaluarParam(k, v, cap, q){
+    const d = PARAMS[k], c = cap[d.f], r = {k, ok:null, txt:''};
+    const l = minus(d.c);
+    if (d.t === 'esp') {
+      if (!cap.esp) { r.txt = `Espesor: sin dato`; return r; }
+      const mats = q.materiales.filter(mm => cap.esp[mm] != null);
+      const max = mats.length ? Math.max(...mats.map(mm => cap.esp[mm])) : Math.max(...Object.values(cap.esp));
+      r.ok = v <= max; r.txt = `${fmtNum(v)} mm de espesor (máx. ${fmtNum(max)} mm)`;
+    } else if (d.t === 'num') {
+      if (c == null) { r.txt = `${d.c}: sin dato`; return r; }
+      r.ok = v <= c; r.txt = `${d.c === 'Ø' ? 'Ø' : d.c} ${fmtNum(v)}${d.u ? ' ' + d.u : ''} (máx. ${fmtNum(c)}${d.u ? ' ' + d.u : ''})`;
+    } else if (d.t === 'min') {
+      if (c == null) { r.txt = `Ejes: sin dato`; return r; }
+      r.ok = c >= +v; r.txt = `${v} ejes (tiene ${c})`;
+    } else if (d.t === 'sel') {
+      if (!c) { r.txt = `${d.c}: sin dato`; return r; }
+      r.ok = c.includes(v); r.txt = r.ok ? TIPOS_L[v] : `No hace ${minus(TIPOS_L[v])}`;
+    } else if (d.t === 'dims' || d.t === 'dims2') {
+      if (!c) { r.txt = `${d.c}: sin dato`; return r; }
+      r.ok = cabe(v, c); r.txt = `${d.c} ${dimsTxt(v)} (máx. ${dimsTxt(c)})`;
+    } else if (d.t === 'bool') {
+      r.ok = c === true; r.txt = r.ok ? 'Con robot' : 'Sin robot';
+    }
+    return r;
+  }
 
   function evaluarProceso(e, req, q){
     const caps = e.procs.filter(x => idsDe(req).includes(x.p));
@@ -795,15 +978,11 @@ footer .logo{height:24px}
     }
     let mejor = null, mejorPts = -1;
     for (const cap of caps) {
-      const r = {req, tiene:true, cap, mat:null, esp:null, diam:null, cant:null};
-      if (q.materiales.length) { r.mats = cap.mat.filter(m => q.materiales.includes(m)); r.mat = r.mats.length > 0; }
-      if (q.espesor != null && CON_ESPESOR.includes(cap.p)) {
-        if (cap.esp) { const conDato = (r.mats || []).filter(m => cap.esp[m] != null); const max = conDato.length ? Math.max(...conDato.map(m => cap.esp[m])) : Math.max(...Object.values(cap.esp)); r.esp = {ok: q.espesor <= max, max}; }
-        else r.esp = {ok:null};
-      }
-      if (q.diametro != null && CON_DIAMETRO.includes(cap.p)) r.diam = cap.diam ? {ok: q.diametro <= cap.diam, max: cap.diam} : {ok:null};
-      if (q.cantidad && cap.cant) r.cant = cap.cant.includes(q.cantidad);
-      const pts = (r.mat === false ? 0 : 2) + (r.esp && r.esp.ok === false ? 0 : 1) + (r.diam && r.diam.ok === false ? 0 : 1) + (r.cant === false ? 0 : .5);
+      const r = {req, tiene:true, cap, mat:null, mats:[], params:[], cant:null};
+      if (q.materiales.length) { r.mats = cap.mat.filter(mm => q.materiales.includes(mm)); r.mat = r.mats.length > 0; }
+      PROC[cap.p].params.forEach(k => { const v = q.params[k]; if (!paramVacio(k, v)) r.params.push(evaluarParam(k, v, cap, q)); });
+      if (q.cantidad && cap.cant) { const bp = bucketPieza(q.cantidad), bs = bucketSerie(q.cantidad); r.cant = cap.cant.includes(bp) || (bs != null && cap.cant.includes(bs)); }
+      const pts = (r.mat === false ? 0 : 2) + r.params.reduce((a, x) => a + (x.ok === false ? 0 : x.ok === null ? .5 : 1), 0) + (r.cant === false ? 0 : .5);
       if (pts > mejorPts) { mejor = r; mejorPts = pts; }
     }
     return mejor;
@@ -815,31 +994,33 @@ footer .logo{height:24px}
     let matProcs = null;
     if (n && !con.length) return null;
     if (!n && q.materiales.length) {
-      matProcs = e.procs.filter(c => c.mat.some(m => q.materiales.includes(m))).map(c => c.p);
+      matProcs = e.procs.filter(c => c.mat.some(mm => q.materiales.includes(mm))).map(c => c.p);
       if (!matProcs.length) return null;
     }
     let dist = null, cercaDe = null;
     q.provs.forEach(k => { const d = km(coordProv(k), e.c); if (dist == null || d < dist) { dist = d; cercaDe = k; } });
     const enZona = q.provs.length ? q.provs.includes(provDe(e)) : null;
     const insitu = q.insitu ? e.modo.includes('in situ') : null;
+    const faltanCert = q.certs.filter(c => !e.cert.includes(c));
+    const certOk = q.certs.length ? faltanCert.length === 0 : null;
     let cantOk = null;
     if (q.cantidad) {
       if (n) { const cs = con.filter(x => x.cant !== null); cantOk = cs.length ? cs.every(x => x.cant) : null; }
-      else cantOk = e.procs.filter(c => !matProcs || matProcs.includes(c.p)).some(c => c.cant && c.cant.includes(q.cantidad));
+      else { const bp = bucketPieza(q.cantidad), bs = bucketSerie(q.cantidad); cantOk = e.procs.filter(c => !matProcs || matProcs.includes(c.p)).some(c => c.cant && (c.cant.includes(bp) || (bs && c.cant.includes(bs)))); }
     }
     const pProc = n ? con.length / n * 50 : 50;
     const pMat = q.materiales.length && n ? per.filter(x => x.tiene && x.mat).length / n * 20 : 20;
-    const params = [];
-    con.forEach(x => { if (x.esp) params.push(x.esp.ok === true ? 1 : x.esp.ok === null ? .5 : 0); if (x.diam) params.push(x.diam.ok === true ? 1 : x.diam.ok === null ? .5 : 0); });
+    const params = con.flatMap(x => x.params.map(p => p.ok === true ? 1 : p.ok === null ? .5 : 0));
     const pPar = (params.length ? params.reduce((a, b) => a + b, 0) / params.length : 1) * 10;
     const pCant = cantOk === false ? 0 : 5;
     const pDist = (dist == null ? 1 : Math.max(0, 1 - dist / 500)) * 15;
-    const pIns = insitu === false ? 0 : 10;
-    const completo = per.every(x => x.tiene && x.mat !== false && !(x.esp && x.esp.ok === false) && !(x.diam && x.diam.ok === false)) && insitu !== false;
-    return {e, per, dist, cercaDe, enZona, insitu, cantOk, matProcs, completo, pts: pProc + pMat + pPar + pCant + pDist + pIns};
+    const pIns = insitu === false ? 0 : 5;
+    const pCert = certOk === false ? 0 : 5;
+    const completo = per.every(x => x.tiene && x.mat !== false && x.params.every(p => p.ok !== false)) && insitu !== false && certOk !== false;
+    return {e, per, dist, cercaDe, enZona, insitu, certOk, faltanCert, cantOk, matProcs, completo, pts: pProc + pMat + pPar + pCant + pDist + pIns + pCert};
   }
 
-  const hayReq = q => q.procesos.length > 0 || q.materiales.length > 0 || q.insitu;
+  const hayReq = q => q.procesos.length > 0 || q.materiales.length > 0 || q.insitu || q.certs.length > 0;
 
   function buscar(q){
     const lista = EMPRESAS.map(e => evaluarEmpresa(e, q)).filter(Boolean)
@@ -866,6 +1047,7 @@ footer .logo{height:24px}
   const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   let q = vacio();
   let presetActivo = null;
+  let buscado = false;
   const SEL = {
     procs:{vacio:'Elegir proceso', get:() => q.procesos, set:v => { q.procesos = v; }, nombre:nombreProc},
     mat:{vacio:'Elegir material', get:() => q.materiales, set:v => { q.materiales = v; }, nombre:k => MAT[k]},
@@ -881,26 +1063,53 @@ footer .logo{height:24px}
       $('abrir-' + id).textContent = $('lista-' + id).hidden ? (v.length ? 'Cambiar' : 'Elegir') : 'Cerrar';
       $('lista-' + id).querySelectorAll('input').forEach(i => { i.checked = v.includes(i.value); });
     });
-    $('f-cant').value = q.cantidad || '';
-    $('f-insitu').checked = !!q.insitu;
-    const verEsp = necesita(CON_ESPESOR, q.procesos), verDiam = necesita(CON_DIAMETRO, q.procesos);
-    $('campo-esp').hidden = !verEsp; $('campo-diam').hidden = !verDiam;
-    if (document.activeElement !== $('f-esp')) $('f-esp').value = q.espesor != null ? q.espesor : '';
-    if (document.activeElement !== $('f-diam')) $('f-diam').value = q.diametro != null ? q.diametro : '';
     $('presets').querySelectorAll('button').forEach((b, i) => { b.classList.toggle('activo', i === presetActivo); b.setAttribute('aria-pressed', i === presetActivo ? 'true' : 'false'); });
+    pintarAfinar();
+  }
+
+  // Panel «Afinar»: cantidad + parámetros de los procesos elegidos + robot/instalaciones + certificaciones
+  let firmaAfinar = '';
+  function pintarAfinar(){
+    const ks = paramsDe(q.procesos);
+    const firma = ks.join(',');
+    const cont = $('af-params');
+    if (firma !== firmaAfinar) {
+      firmaAfinar = firma;
+      cont.innerHTML = ks.map(k => {
+        const d = PARAMS[k];
+        if (d.t === 'bool') return `<label class="check-campo"><input type="checkbox" data-k="${k}"> ${esc(d.l)}</label>`;
+        if (d.t === 'sel' || d.t === 'min') return `<div class="campo"><label for="af-${k}">${esc(d.l)}</label><select id="af-${k}" data-k="${k}"><option value="">Cualquiera</option>${d.op.map(([v, l]) => `<option value="${v}">${esc(l)}</option>`).join('')}</select></div>`;
+        if (d.t === 'dims' || d.t === 'dims2') { const n = d.t === 'dims' ? 3 : 2, ph = ['Largo', 'Ancho', 'Alto']; return `<div class="campo"><span class="lbl">${esc(d.l)}</span><div class="dims">${Array.from({length:n}, (_, i) => `<input type="number" min="0" step="1" inputmode="numeric" placeholder="${ph[i]}" data-k="${k}" data-i="${i}" aria-label="${ph[i]}">`).join('<span>×</span>')}</div></div>`; }
+        return `<div class="campo"><label for="af-${k}">${esc(d.l)}</label><input type="number" id="af-${k}" min="0" step="${d.t === 'esp' ? '0.5' : '1'}" inputmode="decimal" data-k="${k}"></div>`;
+      }).join('');
+      $('af-vacio').hidden = ks.length > 0;
+    }
+    // Sincronizar valores (sin pisar el control que se está escribiendo)
+    cont.querySelectorAll('[data-k]').forEach(i => {
+      if (i === document.activeElement) return;
+      const v = q.params[i.dataset.k];
+      if (i.type === 'checkbox') i.checked = v === true;
+      else if (i.dataset.i != null) i.value = Array.isArray(v) && v[+i.dataset.i] != null ? v[+i.dataset.i] : '';
+      else i.value = v != null ? v : '';
+    });
+    if (document.activeElement !== $('af-cant')) $('af-cant').value = q.cantidad != null ? q.cantidad : '';
+    $('af-insitu').checked = !!q.insitu;
+    $('lista-cert').querySelectorAll('input').forEach(i => { i.checked = q.certs.includes(i.value); });
+    const nCert = q.certs.length;
+    $('cert-resumen').textContent = nCert ? `${nCert} elegida${nCert > 1 ? 's' : ''}` : '';
   }
 
   function checks(r){
     const out = [], n = r.per.length;
     const ck = (cls, s, t) => `<li class="ck ${cls}"><span class="s" aria-hidden="true">${s}</span>${esc(t)}</li>`;
+    const okck = (ok, t) => ok === null ? ck('nd', '·', t) : ck(ok ? 'si' : 'no', ok ? '✓' : '✗', t);
     r.per.forEach(x => {
       if (!x.tiene) { out.push(ck('no', '✗', `${nombreProc(x.req)}: no lo ofrece` + (x.alt.length ? ` (hace ${x.alt.join(', ')})` : ''))); return; }
       const l = PROC[x.cap.p].l;
       out.push(ck('si', '✓', l));
       if (x.mat === false) out.push(ck('no', '✗', `No trabaja ${listaMat(q.materiales)} en ${minus(l)}`));
       else if (x.mat && q.materiales.length > 1 && x.mats.length < q.materiales.length) out.push(ck('si', '✓', `${mayus(listaMat(x.mats))} en ${minus(l)}`));
-      if (x.esp) out.push(x.esp.ok === null ? ck('nd', '·', `Espesor en ${minus(l)}: sin dato`) : ck(x.esp.ok ? 'si' : 'no', x.esp.ok ? '✓' : '✗', `${fmtNum(q.espesor)} mm en ${minus(l)} (máx. ${fmtNum(x.esp.max)} mm)`));
-      if (x.diam) out.push(x.diam.ok === null ? ck('nd', '·', 'Diámetro: sin dato') : ck(x.diam.ok ? 'si' : 'no', x.diam.ok ? '✓' : '✗', `Ø ${fmtNum(q.diametro)} mm (máx. ${fmtNum(x.diam.max)} mm)`));
+      x.params.forEach(p => out.push(okck(p.ok, n > 1 && p.k !== 'robot' ? `${p.txt} en ${minus(l)}` : p.txt)));
     });
     if (q.materiales.length) {
       if (n) { if (r.per.every(x => x.tiene && x.mat && x.mats.length === q.materiales.length)) out.push(ck('si', '✓', `${mayus(enumerar(q.materiales.map(k => minus(MAT[k]))))}${n > 1 ? ' en todos los procesos' : ''}`)); }
@@ -911,7 +1120,8 @@ footer .logo{height:24px}
     }
     if (q.provs.length) out.push(r.enZona ? ck('si', '✓', `En ${r.e.prov}`) : ck('nd', '·', q.provs.length > 1 ? 'Fuera de tus provincias' : `Fuera de ${PROV[q.provs[0]][0]}`));
     if (q.insitu) out.push(r.insitu ? ck('si', '✓', `Trabaja en tus instalaciones${r.e.zona ? ` (${r.e.zona})` : ''}`) : ck('no', '✗', 'Solo trabaja en su taller'));
-    if (q.cantidad && r.cantOk !== null) out.push(r.cantOk ? ck('si', '✓', `${CANT[q.cantidad]} unidades: dentro de su rango habitual`) : ck('nd', '·', `${CANT[q.cantidad]} unidades: fuera de su rango habitual`));
+    if (q.certs.length) out.push(r.certOk ? ck('si', '✓', q.certs.map(c => CERT[c]).join(' · ')) : ck('no', '✗', `Sin ${r.faltanCert.map(c => CERT[c]).join(' ni ')}`));
+    if (q.cantidad && r.cantOk !== null) out.push(r.cantOk ? ck('si', '✓', `${fmtNum(q.cantidad)} unidades: dentro de su rango habitual`) : ck('nd', '·', `${fmtNum(q.cantidad)} unidades: fuera de su rango habitual`));
     return out.join('');
   }
 
@@ -962,24 +1172,28 @@ footer .logo{height:24px}
     cuerpo.innerHTML = html;
   }
 
-  function actualizar(){ pintarFiltros(); pintarResultados(); }
-  let buscado = false;
   function lanzarBusqueda(bajar){
-    buscado = true; $('resultados').hidden = false; actualizar();
-    if (bajar) { $('t-res').scrollIntoView({behavior:'smooth', block:'start'}); $('t-res').focus({preventScroll:true}); }
+    const primera = !buscado;
+    buscado = true; $('resultados').hidden = false; pintarFiltros(); pintarResultados();
+    if (primera && window.innerWidth <= 820) $('afinar-caja').open = false;
+    if (bajar) { $('resultados').scrollIntoView({behavior:'smooth', block:'start'}); $('t-res').focus({preventScroll:true}); }
   }
-  // Cambio hecho a mano en los filtros: deja de haber ejemplo activo y la explicación del texto ya no vale
-  function cambioManual(){ presetActivo = null; $('entendido').innerHTML = ''; pintarFiltros(); }
+  // Cambio hecho a mano en los filtros: deja de haber ejemplo activo y la explicación del texto ya no vale. Tras la primera búsqueda, los resultados se actualizan solos.
+  function cambioManual(){ presetActivo = null; $('entendido').innerHTML = ''; pintarFiltros(); if (buscado) pintarResultados(); }
 
   function pintarEntendido(info){
     const partes = [];
     q.procesos.forEach(p => partes.push(`<b>${esc(nombreProc(p))}</b>${info.motivo[p] ? ` (${esc(info.motivo[p])})` : ''}`));
     if (q.materiales.length) partes.push(`<b>${esc(mayus(enumerar(q.materiales.map(k => minus(MAT[k])), ' o ')))}</b>`);
-    if (q.espesor != null) partes.push(`<b>${fmtNum(q.espesor)} mm de espesor</b>`);
-    if (q.diametro != null) partes.push(`<b>Ø ${fmtNum(q.diametro)} mm</b>`);
-    if (q.cantidad) partes.push(`<b>${CANT[q.cantidad]} unidades</b>${info.cantTxt ? ` (por «${esc(info.cantTxt)}»)` : ''}`);
+    Object.entries(q.params).forEach(([k, v]) => {
+      const d = PARAMS[k];
+      const txt = d.t === 'bool' ? d.l : d.t === 'sel' || d.t === 'min' ? `${d.c}: ${TIPOS_L[v] || v + ' ejes'}` : Array.isArray(v) ? `${d.c} ${dimsTxt(v)} mm` : `${d.c} ${fmtNum(v)}${d.u ? ' ' + d.u : ''}`;
+      partes.push(`<b>${esc(txt)}</b>`);
+    });
+    if (q.cantidad) partes.push(`<b>${fmtNum(q.cantidad)} unidades</b>${info.cantTxt && info.cantTxt !== fmtNum(q.cantidad) ? ` (por «${esc(info.cantTxt)}»)` : ''}`);
     if (q.provs.length) partes.push(`<b>${esc(enumerar(q.provs.map(k => PROV[k][0])))}</b>`);
     if (q.insitu) partes.push('<b>En tus instalaciones</b>');
+    if (q.certs.length) partes.push(`<b>${esc(q.certs.map(c => CERT[c]).join(', '))}</b>`);
     let html = partes.length ? `He puesto en los filtros: ${partes.join(' · ')}.` : '<span class="falta">No he reconocido ningún proceso, material ni provincia. Usa los filtros de arriba.</span>';
     if (info.correcciones.length) html += ` He leído ${info.correcciones.map(([a, b]) => `«${esc(a)}» como «${esc(b)}»`).join(', ')}.`;
     if (info.plazo) html += ' El plazo lo confirmas con cada empresa al contactar.';
@@ -993,12 +1207,13 @@ footer .logo{height:24px}
     q = r.q; presetActivo = null;
     pintarFiltros();
     pintarEntendido(r.info);
+    if (buscado) pintarResultados();
   }
 
   function aplicarPreset(i){
     q = Object.assign(vacio(), JSON.parse(JSON.stringify(PRESETS[i].q)));
     presetActivo = i; $('entendido').innerHTML = '';
-    $('mas').open = false;
+    $('texto-libre').open = false;
     lanzarBusqueda(true);
   }
 
@@ -1013,9 +1228,17 @@ footer .logo{height:24px}
       const filas = [];
       filas.push(['Materiales', `<span class="mats">${cap.mat.map(m => `<span class="mat ${q.materiales.includes(m) && pedido ? 'mark' : ''}">${esc(MAT[m])}</span>`).join('')}</span>`]);
       if (cap.esp) filas.push(['Espesor máximo', Object.entries(cap.esp).map(([m, v]) => `${esc(MAT[m])}: ${fmtNum(v)} mm`).join(' · ')]);
-      if (cap.diam) filas.push([cap.p === 'corte_tubo' ? 'Diámetro de tubo' : 'Diámetro máximo', `${fmtNum(cap.diam)} mm`]);
-      if (cap.ejes) filas.push(['Ejes', esc(cap.ejes)]);
-      if (cap.formato) filas.push(['Dimensiones', esc(cap.formato)]);
+      if (cap.diam) filas.push([cap.p === 'corte_tubo' || cap.p === 'curvado_tubo' ? 'Diámetro de tubo' : 'Diámetro máximo', `${fmtNum(cap.diam)} mm`]);
+      if (cap.long) filas.push([cap.p === 'plegado' ? 'Longitud de plegado' : 'Longitud máxima', `${fmtNum(cap.long)} mm`]);
+      if (cap.ejesMax) filas.push(['Ejes', `Hasta ${cap.ejesMax} ejes`]);
+      if (cap.medida) filas.push(['Medida máxima', `${fmtNum(cap.medida)} mm`]);
+      if (cap.modulo) filas.push(['Módulo máximo', `${cap.modulo}`]);
+      if (cap.dims) filas.push([pr.f === 'Mecanizado' ? 'Recorrido' : 'Tamaño máximo de pieza', `${dimsTxt(cap.dims)} mm`]);
+      if (cap.formato) filas.push(['Formato de chapa', `${dimsTxt(cap.formato)} mm`]);
+      if (cap.peso) filas.push(['Peso máximo', `${fmtNum(cap.peso)} kg`]);
+      if (cap.tonelaje) filas.push(['Prensa', `Hasta ${fmtNum(cap.tonelaje)} t`]);
+      if (cap.tipos) filas.push([cap.p === 'tallado' ? 'Engranajes' : 'Tipos', cap.tipos.map(t => esc(TIPOS_L[t] || t)).join(' · ')]);
+      if (cap.robot != null) filas.push(['Robot de soldadura', cap.robot ? 'Sí' : 'No']);
       if (cap.cant) filas.push(['Cantidades habituales', cap.cant.map(c => CANT[c]).join(' · ') + ' unidades']);
       if (cap.maq) filas.push(['Maquinaria', esc(cap.maq)]);
       const coincide = pedido && (!q.materiales.length || cap.mat.some(m => q.materiales.includes(m)));
@@ -1048,7 +1271,7 @@ footer .logo{height:24px}
             <h2>Dónde trabaja</h2>
             <ul>${e.modo.includes('taller') ? '<li>En su taller</li>' : ''}${e.modo.includes('in situ') ? `<li>En las instalaciones del cliente${e.zona ? ` (${esc(e.zona)})` : ''}</li>` : ''}</ul>
           </div>
-          ${e.cert.length ? `<div class="caja-lat"><h2>Certificaciones</h2><ul>${e.cert.map(c => `<li>${esc(c)}</li>`).join('')}</ul></div>` : ''}
+          ${e.cert.length ? `<div class="caja-lat"><h2>Certificaciones</h2><ul>${e.cert.map(c => `<li>${esc(c === 'en1090' && e.certNota ? e.certNota : CERT[c])}</li>`).join('')}</ul></div>` : ''}
           <div class="caja-lat">
             <h2>Contacto directo</h2>
             <p>En Orkya hablas directamente con la empresa, sin intermediarios.</p>
@@ -1084,8 +1307,8 @@ footer .logo{height:24px}
   const opcion = (v, l) => `<label><input type="checkbox" value="${v}"> ${esc(l)}</label>`;
   $('lista-procs').innerHTML = FAMILIAS.map(f => `<fieldset><legend>${esc(f.l)}</legend>${f.g ? opcion(f.g, GRUPOS[f.g].corto) : ''}${f.ids.map(p => opcion(p, PROC[p].l)).join('')}</fieldset>`).join('');
   $('lista-mat').innerHTML = `<fieldset>${Object.entries(MAT).map(([k, v]) => opcion(k, v)).join('')}</fieldset>`;
-  $('f-cant').innerHTML = '<option value="">Cualquier cantidad</option>' + Object.entries(CANT).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
   $('lista-prov').innerHTML = `<fieldset>${Object.entries(PROV).sort((a, b) => norm(a[1][0]).localeCompare(norm(b[1][0]))).map(([k, v]) => opcion(k, v[0])).join('')}</fieldset>`;
+  $('lista-cert').innerHTML = Object.entries(CERT).map(([k, v]) => opcion(k, v)).join('');
 
   const alternarLista = (id, abrir) => {
     const l = $('lista-' + id), a = abrir == null ? l.hidden : abrir;
@@ -1101,21 +1324,38 @@ footer .logo{height:24px}
         if (id === 'procs') { if (GRUPOS[k]) v = v.filter(x => !GRUPOS[k].ids.includes(x)); else v = v.filter(x => !(GRUPOS[x] && GRUPOS[x].ids.includes(k))); }
         if (!v.includes(k)) v.push(k);
       } else v = v.filter(x => x !== k);
-      s.set(v); cambioManual();
+      s.set(v);
+      if (id === 'procs') { const pks = paramsDe(q.procesos); Object.keys(q.params).forEach(pk => { if (!pks.includes(pk)) delete q.params[pk]; }); }
+      cambioManual();
     });
     $('chips-' + id).addEventListener('click', ev => {
       const b = ev.target.closest('button[data-k]'); if (!b) return;
-      s.set(s.get().filter(x => x !== b.dataset.k)); cambioManual(); $('abrir-' + id).focus();
+      s.set(s.get().filter(x => x !== b.dataset.k));
+      if (id === 'procs') { const pks = paramsDe(q.procesos); Object.keys(q.params).forEach(pk => { if (!pks.includes(pk)) delete q.params[pk]; }); }
+      cambioManual(); $('abrir-' + id).focus();
     });
     $('abrir-' + id).addEventListener('click', () => alternarLista(id));
     $('sel-' + id).addEventListener('click', ev => { if (ev.target === $('sel-' + id) || ev.target.classList.contains('vacio') || ev.target.classList.contains('pchip')) alternarLista(id, true); });
   });
-  $('f-cant').addEventListener('change', ev => { q.cantidad = ev.target.value || null; cambioManual(); });
-  $('f-insitu').addEventListener('change', ev => { q.insitu = ev.target.checked; cambioManual(); });
+
   const leerNum = v => { const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) || n <= 0 ? null : n; };
-  $('f-esp').addEventListener('input', ev => { q.espesor = leerNum(ev.target.value); cambioManual(); });
-  $('f-diam').addEventListener('input', ev => { q.diametro = leerNum(ev.target.value); cambioManual(); });
-  $('limpiar').addEventListener('click', () => { q = vacio(); cambioManual(); if (buscado) pintarResultados(); });
+  $('af-params').addEventListener('input', ev => {
+    const i = ev.target, k = i.dataset.k; if (!k) return;
+    const d = PARAMS[k];
+    if (d.t === 'bool') q.params[k] = i.checked || null;
+    else if (d.t === 'sel' || d.t === 'min') q.params[k] = i.value || null;
+    else if (d.t === 'dims' || d.t === 'dims2') {
+      const n = d.t === 'dims' ? 3 : 2, arr = Array.isArray(q.params[k]) ? q.params[k].slice() : Array(n).fill(null);
+      arr[+i.dataset.i] = leerNum(i.value); q.params[k] = arr.every(x => x == null) ? null : arr;
+    } else q.params[k] = leerNum(i.value);
+    if (q.params[k] == null) delete q.params[k];
+    cambioManual();
+  });
+  $('af-cant').addEventListener('input', ev => { const n = leerNum(ev.target.value); q.cantidad = n != null ? Math.round(n) : null; cambioManual(); });
+  $('af-insitu').addEventListener('change', ev => { q.insitu = ev.target.checked; cambioManual(); });
+  $('lista-cert').addEventListener('change', ev => { const i = ev.target; if (i.type !== 'checkbox') return; q.certs = i.checked ? [...q.certs, i.value] : q.certs.filter(c => c !== i.value); cambioManual(); });
+  $('af-limpiar').addEventListener('click', () => { q.params = {}; q.cantidad = null; q.insitu = false; q.certs = []; cambioManual(); });
+  $('limpiar').addEventListener('click', () => { q = vacio(); cambioManual(); });
   $('form-busqueda').addEventListener('submit', ev => { ev.preventDefault(); lanzarBusqueda(true); });
 
   PRESETS.forEach((pr, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = pr.l; b.addEventListener('click', () => aplicarPreset(i)); $('presets').appendChild(b); });
@@ -1129,7 +1369,7 @@ footer .logo{height:24px}
   window.addEventListener('hashchange', mostrar);
 
   // Para probar desde fuera (sin efecto en la página)
-  window.__orkya = {interpretar, buscar: qq => buscar(Object.assign(vacio(), qq))};
+  window.__orkya = {interpretar, buscar: qq => buscar(Object.assign(vacio(), qq)), PROC, PARAMS};
 
   pintarFiltros();
   mostrar();
