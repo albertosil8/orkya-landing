@@ -138,6 +138,7 @@ form.caja{display:flex;gap:.75rem;align-items:stretch}
 .combo h3{font-size:1.15rem;margin-bottom:.3rem}
 .combo p{margin:0}
 .nada{background:var(--fondo-alt);border-radius:6px;padding:1.25rem;color:var(--texto-suave)}
+.nada.aviso{border-left:4px solid var(--petroleo);color:var(--texto);margin-bottom:1rem}
 
 /* Ficha */
 .ficha{padding-block:1.5rem 3rem}
@@ -900,7 +901,11 @@ footer .logo{height:24px}
     if (!hay('Corte') && /\b(corte|cortes|cortar|cortad[oa]s?)\b/.test(s)) add(hayTubo ? 'corte_tubo' : 'corte');
     if (/\btorn(o|os|ao|ea\w*|er\w*)\b/.test(s)) add('torneado');
     if (/\bfres(a|ao|ar)\w*|\b(3|4|5|tres|cuatro|cinco) ejes\b/.test(s)) add('fresado');
-    if (/\bconvencional(es)?\b|\bmanual(es)?\b/.test(s)) q.procesos = q.procesos.map(p => p === 'torneado' ? 'torneado_conv' : p === 'fresado' ? 'fresado_conv' : p);
+    // «convencional» o «manual» pegado a torneado/fresado solo cambia ese proceso; suelto, cambia los dos
+    const convT = /\btorn\w* (convencional|manual)(es)?\b|\b(convencional|manual)(es)? (de )?torn\w*/.test(s), convF = /\bfres\w* (convencional|manual)(es)?\b|\b(convencional|manual)(es)? (de )?fres\w*/.test(s);
+    const ambos = /\b(torn\w*|fres\w*) y (torn\w*|fres\w*) (convencional|manual)(es)?\b/.test(s);
+    if (convT || convF) q.procesos = q.procesos.map(p => p === 'torneado' && (convT || ambos) ? 'torneado_conv' : p === 'fresado' && (convF || ambos) ? 'fresado_conv' : p);
+    else if (/\bconvencional(es)?\b|\bmanual(es)?\b/.test(s)) q.procesos = q.procesos.map(p => p === 'torneado' ? 'torneado_conv' : p === 'fresado' ? 'fresado_conv' : p);
     if (/\btallad\w*|\btallar\b/.test(s)) add('tallado');
     if (/\brectific\w*/.test(s)) add('rectificado');
     if (/\belectroero\w*|\berosion\b|\bpor hilo\b/.test(s)) add('electroerosion');
@@ -1207,7 +1212,7 @@ footer .logo{height:24px}
     const hace = n ? '' : `<p class="hace">Hace: <b>${e.procs.map(c => esc(PROC[c.p].l)).join('</b> · <b>')}</b></p>`;
     return `<li class="res ${hayReq(q) && r.completo ? 'completo' : ''}">
       <a class="abrir" href="#${e.id}" data-id="${e.id}">
-        <div><h3>${esc(e.n)} <span class="etq">Ejemplo</span></h3><p class="lugar">${esc(e.loc)} (${esc(e.prov)})</p></div>
+        <div><h3>${esc(e.n)} <span class="etq">Ejemplo</span></h3><p class="lugar">${esc(e.loc)} (${esc(e.prov)})${r.fueraDe ? ` · a unos ${fmtNum(r.distFuera)} km de ${esc(PROV[r.fueraDe][0])}` : ''}</p></div>
         ${encaje}
         ${cks ? `<ul class="checks">${cks}</ul>` : ''}
         ${hace}
@@ -1229,6 +1234,25 @@ footer .logo{height:24px}
     if (!hayReq(q)) {
       resumen.textContent = `${lista.length} empresa${lista.length === 1 ? '' : 's'} de ejemplo${zona ? ` en ${zona}` : ''}. Elige un proceso o un material para acotar.`;
       cuerpo.innerHTML = (lista.length ? `<ol class="lista">${lista.map(tarjeta).join('')}</ol>` : `<div class="nada"><p>Ninguna empresa de la demo está en ${esc(zona)}.</p></div>`) + fuera;
+      return;
+    }
+    if (q.provs.length && !lista.some(r => r.completo)) {
+      // Nadie en la zona hace todo lo pedido: se enseñan directamente las de fuera, ordenadas por cercanía, y se dice claro
+      const anotar = r => { let d = null, k = null; q.provs.forEach(pk => { const dd = km(coordProv(pk), r.e.c); if (d == null || dd < d) { d = dd; k = pk; } }); r.fueraDe = k; r.distFuera = d; return r; };
+      const todas = buscar(Object.assign({}, q, {provs:[]})).lista;
+      const fueraCompletos = todas.filter(r => r.completo).map(anotar).sort((a, b) => a.distFuera - b.distFuera);
+      const parcialesEn = lista.filter(r => !r.completo);
+      const fueraParciales = fueraCompletos.length || parcialesEn.length ? [] : todas.filter(r => !r.completo && !lista.some(x => x.e.id === r.e.id)).map(anotar).sort((a, b) => a.distFuera - b.distFuera);
+      resumen.textContent = fueraCompletos.length
+        ? `En ${zona}, ninguna · fuera de ${zona}, ${fueraCompletos.length} ${fueraCompletos.length === 1 ? 'encaja' : 'encajan'} del todo`
+        : `Ninguna encaja del todo, ni en ${zona} ni fuera`;
+      let html = `<div class="nada aviso"><p><b>En ${esc(zona)} no hay ninguna empresa de la demo que haga todo esto.</b> ${fueraCompletos.length ? `Fuera de ${esc(zona)} ${fueraCompletos.length === 1 ? 'hay una que sí lo hace' : 'hay ' + fueraCompletos.length + ' que sí lo hacen'}, de más cerca a más lejos:` : `Tampoco fuera de ${esc(zona)} hay ninguna que lo haga todo.`}</p></div>`;
+      if (fueraCompletos.length) html += `<ol class="lista">${fueraCompletos.map(tarjeta).join('')}</ol>`;
+      if (parcialesEn.length) html += `<p class="grupo">En ${esc(zona)} cumplen una parte</p><ol class="lista">${parcialesEn.map(tarjeta).join('')}</ol>`;
+      if (fueraParciales.length) html += `<p class="grupo">Fuera de ${esc(zona)} cumplen una parte</p><ol class="lista">${fueraParciales.map(tarjeta).join('')}</ol>`;
+      if (!fueraCompletos.length && !parcialesEn.length && !fueraParciales.length) html += '<div class="nada"><p>Ninguna empresa de la demo hace nada de esto. Prueba a quitar algún filtro.</p></div>';
+      html += `<p class="fuera">Para ver también las de fuera de ${esc(zona)} que cumplen una parte: <button type="button" class="limpiar" id="quitar-prov">Buscar en toda España</button></p>`;
+      cuerpo.innerHTML = html;
       return;
     }
     if (!lista.length) {
