@@ -475,11 +475,14 @@ footer .logo{height:24px}
     robot:{l:'Soldadura con robot', c:'Robot', t:'bool', f:'robot'},
     tipo_rect:{l:'Tipo de rectificado', c:'Rectificado', t:'sel', f:'tipos', op:[['plano','Plano'],['cil_ext','Cilíndrico exterior'],['cil_int','Cilíndrico interior'],['sin_centros','Sin centros']]},
     tipo_edm:{l:'Tipo de electroerosión', c:'Electroerosión', t:'sel', f:'tipos', op:[['hilo','Hilo'],['penetracion','Penetración']]},
-    tipo_pieza:{l:'Qué se curva', c:'Curva', t:'sel', f:'tipos', op:[['tubo','Tubo'],['perfil','Perfil']]},
-    tipo_tt:{l:'Tratamiento', c:'Tratamiento', t:'sel', f:'tipos', op:[['temple','Temple y revenido'],['cementacion','Cementación'],['nitruracion','Nitruración'],['recocido','Recocido'],['normalizado','Normalizado']]},
-    tec_fund:{l:'Tecnología de fundición', c:'Fundición', t:'sel', f:'tipos', op:[['arena','Arena'],['coquilla','Coquilla'],['inyeccion','Inyección'],['cera','Cera perdida']]},
+    tipo_pieza:{l:'Qué se curva', c:'Curva', t:'sel', f:'tipos', op:[['tubo','Tubo'],['perfil','Perfil'],['barra','Barra maciza o pletina']]},
+    tipo_tt:{l:'Tratamiento', c:'Tratamiento', t:'sel', f:'tipos', op:[['temple','Temple y revenido'],['cementacion','Cementación'],['nitruracion','Nitruración'],['recocido','Recocido y eliminación de tensiones'],['normalizado','Normalizado'],['induccion','Temple por inducción'],['vacio','Temple al vacío'],['solubilizacion','Solubilización y envejecimiento (aluminio)']]},
+    tec_fund:{l:'Tecnología de fundición', c:'Fundición', t:'sel', f:'tipos', op:[['arena','Arena'],['coquilla','Coquilla'],['inyeccion','Inyección (alta presión)'],['cera','Cera perdida (microfusión)']]},
     tipo_mont:{l:'Tipo de montaje', c:'Montaje', t:'sel', f:'tipos', op:[['mecanico','Mecánico'],['electrico','Eléctrico'],['ambos','Mecánico y eléctrico']]},
-    tec_3d:{l:'Tecnología 3D', c:'3D', t:'sel', f:'tipos', op:[['fdm','FDM'],['sla','SLA'],['sls','SLS'],['metal','Metal']]}
+    tec_3d:{l:'Tecnología 3D', c:'3D', t:'sel', f:'tipos', op:[['fdm','FDM'],['sla','SLA'],['sls','SLS'],['metal','Metal (SLM / DMLS)']]},
+    tipo_forja:{l:'Tipo de forja', c:'Forja', t:'sel', f:'tipos', op:[['estampa','Con estampa (matriz cerrada)'],['libre','Libre']]},
+    tipo_crom:{l:'Recubrimiento', c:'Recubrimiento', t:'sel', f:'tipos', op:[['cromo_duro','Cromado duro'],['cromo_deco','Cromado decorativo'],['niquel_el','Niquelado electrolítico'],['niquel_q','Niquelado químico']]},
+    tipo_decap:{l:'Cómo se hace', c:'Método', t:'sel', f:'tipos', op:[['inmersion','Por inmersión en cuba'],['gel','Con gel o spray']]}
   };
   const TIPOS_L = {};
   Object.values(PARAMS).forEach(p => (p.op || []).forEach(([k, l]) => { TIPOS_L[k] = l; }));
@@ -501,10 +504,12 @@ footer .logo{height:24px}
     curvado_tubo:{l:'Curvado de tubo y perfil', f:'Conformado', params:['tipo_pieza','diametro']},
     cilindrado:{l:'Cilindrado de chapa', f:'Conformado', params:['espesor','longitud']},
     punzonado:{l:'Punzonado', f:'Conformado', params:['espesor','formato']},
-    estampacion:{l:'Estampación', f:'Conformado', params:['tonelaje','espesor'], serie:true},
+    estampacion:{l:'Estampación de chapa', f:'Conformado', params:['tonelaje','espesor'], serie:true},
+    forja:{l:'Forja', f:'Conformado', params:['tipo_forja','peso'], serie:true},
     tig:{l:'Soldadura TIG', f:'Soldadura', params:['robot']},
     mig:{l:'Soldadura MIG/MAG', f:'Soldadura', params:['robot']},
     sold_laser:{l:'Soldadura láser', f:'Soldadura', params:['robot','espesor']},
+    sold_puntos:{l:'Soldadura por puntos', f:'Soldadura', params:['robot','espesor'], serie:true},
     pintura_polvo:{l:'Pintura en polvo', f:'Pintura', params:['dims','peso'], serie:true},
     pintura_liq:{l:'Pintura líquida', f:'Pintura', params:['dims'], serie:true},
     galvanizado:{l:'Galvanizado en caliente', f:'Tratamientos', params:['dims','peso'], serie:true},
@@ -512,6 +517,8 @@ footer .logo{height:24px}
     anodizado:{l:'Anodizado', f:'Tratamientos', params:['dims'], serie:true},
     chorreado:{l:'Chorreado y granallado', f:'Tratamientos', params:['dims'], serie:true},
     trat_termico:{l:'Tratamientos térmicos', f:'Tratamientos', params:['tipo_tt','dims','peso'], serie:true},
+    cromado:{l:'Cromado y niquelado', f:'Tratamientos', params:['tipo_crom','dims'], serie:true},
+    decapado:{l:'Decapado y pasivado de inoxidable', f:'Tratamientos', params:['tipo_decap','dims'], serie:true},
     calderia:{l:'Calderería y estructura metálica', f:'Calderería, fundición, montaje y 3D', params:['peso']},
     fundicion:{l:'Fundición', f:'Calderería, fundición, montaje y 3D', params:['tec_fund','peso'], serie:true},
     montaje:{l:'Montaje', f:'Calderería, fundición, montaje y 3D', params:['tipo_mont']},
@@ -527,13 +534,13 @@ footer .logo{height:24px}
   const FAMILIAS = [
     {l:'Mecanizado', g:'mecanizado', ids:['torneado_conv','fresado_conv','torneado','fresado','tallado','rectificado','electroerosion']},
     {l:'Corte', g:'corte', ids:['corte_laser','corte_tubo','corte_agua','plasma']},
-    {l:'Conformado', ids:['plegado','curvado_tubo','cilindrado','punzonado','estampacion']},
-    {l:'Soldadura', g:'soldadura', ids:['tig','mig','sold_laser']},
+    {l:'Conformado', ids:['plegado','curvado_tubo','cilindrado','punzonado','estampacion','forja']},
+    {l:'Soldadura', g:'soldadura', ids:['tig','mig','sold_laser','sold_puntos']},
     {l:'Pintura', g:'pintura', ids:['pintura_polvo','pintura_liq']},
-    {l:'Tratamientos', ids:['galvanizado','cincado','anodizado','chorreado','trat_termico']},
+    {l:'Tratamientos', ids:['galvanizado','cincado','anodizado','chorreado','trat_termico','cromado','decapado']},
     {l:'Calderería, fundición, montaje y 3D', ids:['calderia','fundicion','montaje','imp3d']}
   ];
-  const MAT = {carbono:'Acero al carbono', inox:'Acero inoxidable', aluminio:'Aluminio', bronce:'Bronce', laton:'Latón', cobre:'Cobre', titanio:'Titanio', fundicion:'Fundición', plastico:'Plásticos técnicos'};
+  const MAT = {carbono:'Acero al carbono', inox:'Acero inoxidable', aluminio:'Aluminio', bronce:'Bronce', laton:'Latón', cobre:'Cobre', titanio:'Titanio', fundicion:'Fundición de hierro', plastico:'Plásticos técnicos', acero_galv:'Acero galvanizado', acero_aleado:'Acero aleado o de herramienta', metal_duro:'Metal duro'};
   const CERT = {iso9001:'ISO 9001', iso14001:'ISO 14001', en1090:'EN 1090', en3834:'EN ISO 3834', iso9606:'Soldadores homologados EN ISO 9606', iatf:'IATF 16949', en9100:'EN 9100'};
   const CANT = {'1-10':'1–10', '10-100':'10–100', '100-1000':'100–1.000', '1000+':'Más de 1.000', '1000-10000':'1.000–10.000', '10000+':'Más de 10.000'};
   const bucketPieza = n => n <= 10 ? '1-10' : n <= 100 ? '10-100' : n <= 1000 ? '100-1000' : '1000+';
@@ -743,6 +750,34 @@ footer .logo{height:24px}
      procs:[
       {p:'anodizado', mat:['aluminio'], dims:[6500,800,1500], cant:TODAS_SERIE, maq:'Línea de anodizado de 6,5 m'},
       {p:'pintura_polvo', mat:['aluminio'], dims:[6500,800,1500], peso:100, cant:TODAS_SERIE}
+     ]},
+    {id:'ugarbe', n:'Forjas Ugarbe', loc:'Beasain', prov:'Gipuzkoa', c:[43.05,-2.20], tipo:'Empresa', plantilla:'50–100 personas',
+     desc:'Forja con estampa de piezas de acero para automoción y maquinaria, y forja libre de ejes y bridas de gran tamaño. Mecanizan las piezas forjadas.',
+     modo:['taller'], cert:['iso9001','iatf'], conf:true, act:'10/2026',
+     procs:[
+      {p:'forja', mat:['carbono','inox','aluminio'], tipos:['estampa','libre'], peso:120, cant:TODAS_SERIE, maq:'Prensas de forja de 1.600 a 4.000 t y martillo de 3 t'},
+      {p:'torneado', mat:['carbono','inox'], diam:600, long:2000, cant:['10-100','100-1000']}
+     ]},
+    {id:'riuclar', n:'Punteados Riuclar', loc:'Alzira', prov:'Valencia', c:[39.15,-0.44], tipo:'Empresa', plantilla:'10–25 personas',
+     desc:'Soldadura por puntos de chapa fina en serie para electrodoméstico, mobiliario metálico y automoción. Punzonan y pliegan la chapa antes de soldar.',
+     modo:['taller'], cert:['iso9001'], conf:true, act:'10/2026',
+     procs:[
+      {p:'sold_puntos', mat:['carbono','inox'], robot:true, esp:{carbono:3,inox:2}, cant:['100-1000','1000-10000','10000+'], maq:'Célula robotizada y 6 máquinas de pedestal'},
+      {p:'punzonado', mat:['carbono','inox'], esp:{carbono:4,inox:3}, formato:[2500,1250], cant:['100-1000','1000-10000']},
+      {p:'plegado', mat:['carbono','inox'], esp:{carbono:4,inox:3}, long:2500, cant:['100-1000','1000-10000']}
+     ]},
+    {id:'besaia', n:'Cromados Besaia', loc:'Torrelavega', prov:'Cantabria', c:[43.35,-4.05], tipo:'Empresa', plantilla:'10–25 personas',
+     desc:'Cromado duro de ejes, vástagos y cilindros hidráulicos, y niquelado químico de piezas de precisión. Rectifican antes y después del recubrimiento.',
+     modo:['taller'], cert:['iso9001'], conf:true, act:'10/2026',
+     procs:[
+      {p:'cromado', mat:['carbono','inox','laton','cobre','aluminio'], tipos:['cromo_duro','niquel_el','niquel_q'], dims:[6000,800,1200], cant:['10-100','100-1000','1000-10000'], maq:'Cubas de cromo duro de 6 m y línea de níquel químico'},
+      {p:'rectificado', mat:['carbono','inox'], tipos:['cil_ext'], medida:6000, cant:['1-10','10-100']}
+     ]},
+    {id:'inoxneta', n:'Pasivados Inoxneta', loc:'Pamplona', prov:'Navarra', c:[42.81,-1.64], tipo:'Empresa', plantilla:'5–10 personas',
+     desc:'Decapado y pasivado de acero inoxidable después de soldar: por inmersión en su taller y con gel o spray en las instalaciones del cliente para depósitos y tuberías grandes.',
+     modo:['taller','in situ'], zona:'Navarra, La Rioja, País Vasco y Zaragoza', zonaProvs:['navarra','la-rioja','alava','gipuzkoa','bizkaia','zaragoza'], cert:[], conf:false, act:'10/2026',
+     procs:[
+      {p:'decapado', mat:['inox'], tipos:['inmersion','gel'], dims:[4000,1200,1500], cant:TODAS_SERIE, maq:'Cuba de decapado de 4 m y equipos portátiles de gel y spray'}
      ]}
   ];
 
@@ -754,7 +789,8 @@ footer .logo{height:24px}
     {l:'Soldadura con robot', q:{procesos:['soldadura'], materiales:['carbono'], params:{robot:true}, cantidad:5000}},
     {l:'Soldador que vaya a planta', q:{procesos:['soldadura'], insitu:true, provs:['navarra']}},
     {l:'Estructura galvanizada en Madrid', q:{procesos:['calderia','galvanizado'], materiales:['carbono'], provs:['madrid']}},
-    {l:'Temple de ejes en Cataluña', q:{procesos:['trat_termico'], materiales:['carbono'], params:{tipo_tt:'temple'}, cantidad:300, provs:['barcelona','girona','lleida','tarragona']}}
+    {l:'Temple de ejes en Cataluña', q:{procesos:['trat_termico'], materiales:['carbono'], params:{tipo_tt:'temple'}, cantidad:300, provs:['barcelona','girona','lleida','tarragona']}},
+    {l:'Cromado duro en el norte', q:{procesos:['cromado'], materiales:['carbono'], params:{tipo_crom:'cromo_duro'}, provs:['cantabria','bizkaia','gipuzkoa','asturias']}}
   ];
   // Frases de ejemplo para el texto libre (dos con faltas a propósito)
   const EJEMPLOS = [
@@ -764,7 +800,9 @@ footer .logo{height:24px}
     'Meanizado de aluminio en Valencia',
     'Pintura en polbo en Alicante para 100 piezas',
     'Temple y revenido de 300 ejes de acero en Barcelona',
-    'Fundición de aluminio en coquilla, piezas de 20 kg'
+    'Fundición de aluminio en coquilla, piezas de 20 kg',
+    'Forja con estampa de 2.000 bridas de acero',
+    'Decapado de depósitos de inox en nuestra planta de Navarra'
   ];
 
   // ---------- Utilidades ----------
@@ -798,6 +836,7 @@ footer .logo{height:24px}
     'calderia','caldereria','estructura','estructuras','pintura','pintar','pintado','polvo','lacado','galvanizado','galvanizada','galvanizar','cincado','zincado','anodizado','chorreado','granallado',
     'temple','templado','revenido','cementacion','nitruracion','recocido','tratamiento','tratamientos','termico','termicos','fundicion','fundido','coquilla','inyeccion',
     'montaje','impresion','inoxidable','aluminio','bronce','laton','cobre','titanio','plastico','plasticos','acero','carbono','hierro','chapa','diametro','espesor','unidades',
+    'forja','forjado','forjados','forjar','puntos','cromado','cromar','niquelado','niquelar','decapado','decapar','pasivado','pasivar','galvanizada','aleado','herramienta',
     'prototipo','prototipos','corte','cortar','cortado','cortados','cortadas','casquillos','bridas','rodillos','barandillas','escaleras','instalaciones','robot','robotizada','certificado'];
   const ALIAS = {};
   Object.entries(PROV).forEach(([k, v]) => { ALIAS[norm(v[0])] = k; });
@@ -809,7 +848,7 @@ footer .logo{height:24px}
   const NO_CORREGIR = new Set(['corta','cortas','corto','cortos','serie','series','llegar','pegar','pagar','placa','placas','plazo','plazos','metal','metales',
     'torre','torres','tuerca','tuercas','precio','precios','acera','pinta','pintas','grande','grandes','planos','plano','palas','salas','lados','montes','templo','tiempo','tiempos']);
   const STOP = new Set(('a al alguien alrededor alrededores aqui busco buscamos buscando cantidad carcasa carcasas cerca como con conjunto conjuntos de del e el empresa empresas en esa ese eso esta este esto estos estas fabrica fabricacion fabricar fabrique fabriquen hace hacen hacer haga hagan la las le les lo los maquina maquinas me metalica metalicas metalico metalicos mi mis necesito necesitamos ni nos o para parte partes pieza piezas poder por provincia proveedor proveedores pueda puedan puede que queremos quien quiero se sin soporte soportes su sus taller talleres trabaje trabajen trabajar trabajo trabajos tu tus u un una unas uno unos y zona medida medidas hecho hecha hechos hechas tipo cualquier algo nuestra nuestro nuestras nuestros').split(' '));
-  const RECONOCE = /^(mecani|convenc|torn|fres|tall|engran|pinon|corona|cremaller|rectif|electroero|erosion|hilo$|sold|pleg|curva|cilindr|virola|punzon|estamp|laser|plasma|oxicort|agua$|waterjet|cort|calder|estructur|pint|polvo|lacad|epoxi|liquid|galvaniz|cincad|zincad|anodiz|chorre|granall|templ|reven|cementa|nitrur|recoc|normaliz|gris$|nodular|tratam|termic|fundi|colada|coquilla|inyec|arena$|montaj|montar|impres|imprim|3d$|inox|alumin|bronce|laton|cobre|titanio|plastic|nylon|poliamida|delrin|peek$|teflon|pvc$|metacrilato|acero|hierro|carbono|chapa|tubo|perfil|diametro|espesor|mm$|kg$|ejes?$|casquill|bulon|brida|rodillo|barandill|escaler|bastidor|deposito|tolva|pasarela|cnc$|tig$|mig$|mag$|pom$|unidad|uds?$|serie|prototip|urgen|situ$|instalacion|obra$|planta$|desplaz|vengan?$|miles$|cientos$|larga$|media$|gran$|pequena$|sueltas?$|unica$|lotes?$|tirada|pedido|robot|certific|homolog|ø)/;
+  const RECONOCE = /^(forj|punto|crom|niquel|decap|pasiv|aleado|herramient|widia|carburo|duro$|vacio$|pletina|barras?$|maciz|estampa$|inmersion|gel$|spray|decorativ|solubiliz|envejec|induccion|galvanizad|mecani|convenc|torn|fres|tall|engran|pinon|corona|cremaller|rectif|electroero|erosion|hilo$|sold|pleg|curva|cilindr|virola|punzon|estamp|laser|plasma|oxicort|agua$|waterjet|cort|calder|estructur|pint|polvo|lacad|epoxi|liquid|galvaniz|cincad|zincad|anodiz|chorre|granall|templ|reven|cementa|nitrur|recoc|normaliz|gris$|nodular|tratam|termic|fundi|colada|coquilla|inyec|arena$|montaj|montar|impres|imprim|3d$|inox|alumin|bronce|laton|cobre|titanio|plastic|nylon|poliamida|delrin|peek$|teflon|pvc$|metacrilato|acero|hierro|carbono|chapa|tubo|perfil|diametro|espesor|mm$|kg$|ejes?$|casquill|bulon|brida|rodillo|barandill|escaler|bastidor|deposito|tolva|pasarela|cnc$|tig$|mig$|mag$|pom$|unidad|uds?$|serie|prototip|urgen|situ$|instalacion|obra$|planta$|desplaz|vengan?$|miles$|cientos$|larga$|media$|gran$|pequena$|sueltas?$|unica$|lotes?$|tirada|pedido|robot|certific|homolog|ø)/;
   const PIEZAS = [
     {re:/\b(engranaj\w*|pinon(es)?|coronas?|cremaller\w*)\b/, p:['tallado']},
     {re:/\b(ejes?|casquillos?|bulon(es)?|rodillos?|bridas?)\b/, p:['torneado']},
@@ -852,6 +891,8 @@ footer .logo{height:24px}
 
     const reSoldLaser = /\bsold\w* (por |con |a )?laser\b/g;
     if (reSoldLaser.test(s)) { add('sold_laser'); s = s.replace(reSoldLaser, ' '); }
+    const reSoldPuntos = /\bsold\w* (por |a |de )?puntos\b|\bpor puntos\b|\bpunteado\b/g;
+    if (reSoldPuntos.test(s)) { add('sold_puntos'); s = s.replace(reSoldPuntos, ' '); }
     const hayTubo = /\btubos?\b/.test(s), hayChapa = /\bchapas?\b/.test(s), hayPerfil = /\bperfil(es)?\b/.test(s);
     if (/\blaser\b/.test(s)) { if (hayTubo) add('corte_tubo'); if (!hayTubo || hayChapa) add('corte_laser'); }
     if (/\b(cort\w*|chorro) (por |con |de |al )?agua\b|\bwaterjet\b/.test(s)) add('corte_agua');
@@ -866,8 +907,9 @@ footer .logo{height:24px}
     if (/\bpleg\w*/.test(s)) add('plegado');
     if (/\bcilindr\w*/.test(s) || (/\bcurva\w*/.test(s) && hayChapa && !hayTubo)) add('cilindrado');
     else if (/\bcurva(do|da|dos|das|r)\b/.test(s)) add('curvado_tubo');
-    if (/\bpunzon\w*/.test(s)) add('punzonado');
-    if (/\bestamp\w*/.test(s)) add('estampacion');
+    if (/\bpunzona\w*/.test(s)) add('punzonado');
+    if (/\bestamp\w*/.test(s) && !/\bforj\w*/.test(s)) add('estampacion');
+    if (/\bforj\w*/.test(s)) add('forja');
     if (/\btig\b/.test(s)) add('tig');
     if (/\b(mig|mag)\b/.test(s)) add('mig');
     if (!hay('Soldadura') && /\bsold\w*/.test(s)) add('soldadura');
@@ -875,11 +917,14 @@ footer .logo{height:24px}
     if (/\bpolvo\b|\blacad\w*|\bepoxi\w*/.test(s)) add('pintura_polvo');
     if (/\bliquida\b/.test(s)) add('pintura_liq');
     if (!q.procesos.some(p => ['pintura_polvo','pintura_liq'].includes(p)) && /\bpint\w*/.test(s)) add('pintura');
-    if (/\bgalvaniz\w*/.test(s)) add('galvanizado');
+    const sinMatGalv = s.replace(/\b(chapa|chapas|acero|piezas?|tubos?|perfil(es)?) galvanizad[oa]s?\b/g, ' ');
+    if (/\bgalvaniz\w*/.test(sinMatGalv)) add('galvanizado');
+    if (/\bcrom\w*|\bniquel\w*/.test(s)) add('cromado');
+    if (/\bdecap\w*|\bpasiv\w*/.test(s)) add('decapado');
     if (/\b[cz]incad\w*/.test(s)) add('cincado');
     if (/\banodiz\w*/.test(s)) add('anodizado');
     if (/\bchorre\w*|\bgranall\w*/.test(s)) add('chorreado');
-    if (/\btempl(e|ad\w*)\b|\bcementa\w*|\bnitrur\w*|\brecocid\w*|\bnormalizad\w*|\btratamientos? termicos?\b/.test(s)) add('trat_termico');
+    if (/\btempl(e|ad\w*)\b|\bcementa\w*|\bnitrur\w*|\brecocid\w*|\bnormalizad\w*|\bsolubiliz\w*|\benvejec\w*|\btratamientos? termicos?\b/.test(s)) add('trat_termico');
     if (/\bfundi(cion|ciones|do|das|r)\b|\bcolada\b|\bcoquilla\b/.test(s) && !/\bfundicion (gris|nodular)\b|\bhierro fundido\b/.test(s.replace(/\bfundicion (de|en)\b/, ''))) add('fundicion');
     if (/\bmontaj\w*|\bmontar\b/.test(s)) add('montaje');
     if (/\b3d\b|\bimprimir\b/.test(s)) add('imp3d');
@@ -897,7 +942,10 @@ footer .logo{height:24px}
     if (/\btitanio\b/.test(s)) q.materiales.push('titanio');
     if (/\bfundicion (gris|nodular)\b|\bhierro fundido\b|\bpiezas? de fundicion\b/.test(s)) q.materiales.push('fundicion');
     if (/\bplastic\w*|\b(nylon|poliamida|pom|delrin|peek|teflon|pvc|metacrilato)\b/.test(s)) q.materiales.push('plastico');
-    if (/\bacero (al )?carbono\b|\bhierro\b|\bcarbono\b/.test(s) || (/\bacero\w*/.test(s) && !/\bacero inox\w*/.test(s))) q.materiales.push('carbono');
+    if (/\b(chapa|chapas|acero|piezas?|tubos?|perfil(es)?) galvanizad[oa]s?\b/.test(s)) q.materiales.push('acero_galv');
+    if (/\bacero (aleado|de herramienta|rapido)\b|\bf-?1[0-9]{3}\b|\bf-?5[0-9]{3}\b/.test(s)) q.materiales.push('acero_aleado');
+    if (/\bmetal duro\b|\bwidia\b|\bcarburo\b/.test(s)) q.materiales.push('metal_duro');
+    if (/\bacero (al )?carbono\b|\bhierro\b|\bcarbono\b/.test(s) || (/\bacero\w*/.test(s) && !/\bacero (inox\w*|galvanizad\w*|aleado|de herramienta|rapido)\b/.test(s))) q.materiales.push('carbono');
 
     // Parámetros
     const reMm = /(\d+(?:[.,]\d+)?)\s*mm\b/g;
@@ -913,9 +961,12 @@ footer .logo{height:24px}
     if ((m = /\b(3|4|5|tres|cuatro|cinco) ejes\b/.exec(s))) q.params.ejes = {tres:'3', cuatro:'4', cinco:'5'}[m[1]] || m[1];
     if (/\brobot\w*/.test(s)) q.params.robot = true;
     if (/\bhilo\b/.test(s)) q.params.tipo_edm = 'hilo'; else if (/\bpenetracion\b/.test(s)) q.params.tipo_edm = 'penetracion';
-    if (/\btempl\w*/.test(s)) q.params.tipo_tt = 'temple'; else if (/\bcementa\w*/.test(s)) q.params.tipo_tt = 'cementacion'; else if (/\bnitrur\w*/.test(s)) q.params.tipo_tt = 'nitruracion'; else if (/\brecocid\w*/.test(s)) q.params.tipo_tt = 'recocido';
+    if (/\btempl\w* (al |en |de )?vacio\b/.test(s)) q.params.tipo_tt = 'vacio'; else if (/\binduccion\b/.test(s) && /\btempl\w*/.test(s)) q.params.tipo_tt = 'induccion'; else if (/\btempl\w*/.test(s)) q.params.tipo_tt = 'temple'; else if (/\bcementa\w*/.test(s)) q.params.tipo_tt = 'cementacion'; else if (/\bnitrur\w*/.test(s)) q.params.tipo_tt = 'nitruracion'; else if (/\brecocid\w*|\beliminacion de tensiones\b/.test(s)) q.params.tipo_tt = 'recocido'; else if (/\bsolubiliz\w*|\benvejec\w*/.test(s)) q.params.tipo_tt = 'solubilizacion'; else if (/\bnormalizad\w*/.test(s)) q.params.tipo_tt = 'normalizado';
+    if (q.procesos.includes('forja')) { if (/\bestampa\b|\bmatriz cerrada\b/.test(s)) q.params.tipo_forja = 'estampa'; else if (/\bforja libre\b|\blibre\b/.test(s)) q.params.tipo_forja = 'libre'; }
+    if (q.procesos.includes('cromado')) { if (/\bcrom\w* duro\b/.test(s)) q.params.tipo_crom = 'cromo_duro'; else if (/\bdecorativ\w*/.test(s)) q.params.tipo_crom = 'cromo_deco'; else if (/\bniquel\w* quimic\w*/.test(s)) q.params.tipo_crom = 'niquel_q'; else if (/\bniquel\w*/.test(s)) q.params.tipo_crom = 'niquel_el'; }
+    if (q.procesos.includes('decapado')) { if (/\binmersion\b|\bcuba\b/.test(s)) q.params.tipo_decap = 'inmersion'; else if (/\bgel\b|\bspray\b|\bsitu\b|\binstalaciones\b|\bplanta\b/.test(s)) q.params.tipo_decap = 'gel'; }
     if (/\bcoquilla\b/.test(s)) q.params.tec_fund = 'coquilla'; else if (/\barena\b/.test(s)) q.params.tec_fund = 'arena'; else if (/\binyec\w*/.test(s)) q.params.tec_fund = 'inyeccion'; else if (/\bcera perdida\b/.test(s)) q.params.tec_fund = 'cera';
-    if (q.procesos.includes('curvado_tubo')) q.params.tipo_pieza = hayPerfil && !hayTubo ? 'perfil' : 'tubo';
+    if (q.procesos.includes('curvado_tubo')) q.params.tipo_pieza = /\b(barra|barras|pletina|pletinas|macizo|maciza)\b/.test(s) && !hayTubo ? 'barra' : hayPerfil && !hayTubo ? 'perfil' : 'tubo';
     if (/\bsin centros\b/.test(s)) q.params.tipo_rect = 'sin_centros'; else if (/\bcilindric\w* interior\b/.test(s)) q.params.tipo_rect = 'cil_int'; else if (/\bcilindric\w*/.test(s) && q.procesos.includes('rectificado')) q.params.tipo_rect = 'cil_ext'; else if (/\brectificado plano\b|\bplano\b/.test(s) && q.procesos.includes('rectificado')) q.params.tipo_rect = 'plano';
     if ((m = /\b(fdm|sla|sls)\b/.exec(s))) q.params.tec_3d = m[1]; else if (/\b3d\b.*\bmetal\b/.test(s)) q.params.tec_3d = 'metal';
 
