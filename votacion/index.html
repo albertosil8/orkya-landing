@@ -108,12 +108,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .final h1 { margin: 0; font-size: clamp(38px, 7vw, 64px); line-height: 1; font-weight: 800; letter-spacing: -0.035em; }
 .final p { margin: 0; font-size: 18px; color: var(--muted); max-width: 52ch; }
 .final p b { color: var(--ink); }
-.resumen { width: 100%; margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
-.resumen li { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 15px; font-variant-numeric: tabular-nums; }
-.resumen li b { font-weight: 700; white-space: nowrap; }
-.resumen .si { color: var(--si); font-weight: 700; }
-.resumen .medio { color: var(--medio); font-weight: 700; }
-.resumen .no { color: var(--no); font-weight: 700; }
+/* El botón de envío es el formulario de Tally dentro de la página; va sobre su propio fondo claro en los dos temas */
+.envio { width: 100%; max-width: 520px; background: #F2F3F5; border-radius: 18px; overflow: hidden; }
+.envio iframe { display: block; width: 100%; height: 170px; border: 0; }
+.final .nota a { color: var(--ink); font-weight: 600; }
 .nota { font-size: 15px !important; }
 .enlace { border: 0; background: transparent; color: var(--muted); font-size: 15px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; padding: 8px 0; min-height: 44px; }
 .enlace:hover { color: var(--ink); }
@@ -177,10 +175,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
   <div class="wrap">
     <span class="logo" role="img" aria-label="Orkya"></span>
     <h1 id="t-final">¡Ya está!</h1>
-    <p>Falta un paso para que cuenten tus votos: pulsa el botón. Se abrirá una página con tus votos y allí pulsas <b>Enviar mis votos</b>.</p>
-    <a class="btn-grande" id="enviar" href="https://tally.so/r/q55Do9" target="_blank" rel="noopener">Enviar mis votos</a>
-    <ul class="resumen" id="resumen" aria-label="Tus votos"></ul>
+    <p id="final-txt">Ahora pulsa <b>Enviar mis votos</b> para que cuenten.</p>
+    <div class="envio" id="envio"><iframe id="tally" title="Enviar mis votos" src="about:blank"></iframe></div>
+    <p class="nota" id="final-alt">¿No te sale el botón? <a id="enviar-alt" href="https://tally.so/r/q55Do9" target="_blank" rel="noopener">Envía tus votos desde aquí</a>.</p>
     <button class="enlace" type="button" id="revisar">Cambiar algún voto</button>
+    <button class="enlace" type="button" id="otra" hidden>¿Va a votar otra persona con este móvil? Empezar de nuevo</button>
   </div>
 </section>
 
@@ -229,20 +228,32 @@ button { font: inherit; color: inherit; cursor: pointer; }
     window.scrollTo(0, 0);
   }
 
+  var EMBED = 'https://tally.so/embed/q55Do9?hideTitle=1&alignLeft=1';
   function pintarFinal() {
-    var ul = document.getElementById('resumen'); ul.textContent = '';
     var qs = [];
-    for (var n = 1; n <= N; n++) {
-      var v = estado.votos[n] || '';
-      var li = document.createElement('li');
-      var b = document.createElement('b'); b.textContent = 'Diseño ' + n;
-      var s = document.createElement('span'); s.textContent = v || 'Sin voto';
-      s.className = v === 'Me gusta' ? 'si' : v === 'Indiferente' ? 'medio' : v === 'No me gusta' ? 'no' : '';
-      li.appendChild(b); li.appendChild(s); ul.appendChild(li);
-      if (v) qs.push('d' + n + '=' + encodeURIComponent(v));
-    }
-    document.getElementById('enviar').href = FORM + (qs.length ? '?' + qs.join('&') : '');
+    for (var n = 1; n <= N; n++) { var v = estado.votos[n]; if (v) qs.push('d' + n + '=' + encodeURIComponent(v)); }
+    var q = qs.join('&');
+    var enviado = !!estado.enviado;
+    document.getElementById('t-final').textContent = enviado ? '¡Gracias por votar!' : '¡Ya está!';
+    document.getElementById('final-txt').innerHTML = enviado ? 'Tus votos se han enviado. Ya puedes cerrar esta página.' : 'Ahora pulsa <b>Enviar mis votos</b> para que cuenten.';
+    document.getElementById('final-alt').hidden = enviado;
+    document.getElementById('revisar').hidden = enviado;
+    document.getElementById('otra').hidden = !enviado;
+    document.getElementById('enviar-alt').href = FORM + (q ? '?' + q : '');
+    var fr = document.getElementById('tally'), caja = document.getElementById('envio');
+    if (enviado && !recienEnviado) { caja.hidden = true; return; }
+    caja.hidden = false;
+    var src = EMBED + (q ? '&' + q : '');
+    if (fr.getAttribute('src') !== src && !recienEnviado) fr.setAttribute('src', src);
   }
+  // Tally avisa a la página cuando se han enviado los votos
+  var recienEnviado = false;
+  window.addEventListener('message', function (e) {
+    if (e.origin !== 'https://tally.so') return;
+    var d = e.data;
+    if (typeof d === 'string') { try { d = JSON.parse(d); } catch (err) { return; } }
+    if (d && d.event === 'Tally.FormSubmitted') { estado.enviado = true; recienEnviado = true; guardar(); pintarFinal(); }
+  });
 
   document.getElementById('empezar').addEventListener('click', function () { estado.paso = 1; guardar(); mostrar(); });
   botones.forEach(function (b) {
@@ -255,6 +266,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
   sig.addEventListener('click', function () { if (!estado.votos[estado.paso]) return; estado.paso += 1; guardar(); mostrar(); });
   document.getElementById('atras').addEventListener('click', function () { estado.paso = Math.max(0, estado.paso - 1); guardar(); mostrar(); });
   document.getElementById('revisar').addEventListener('click', function () { estado.paso = N; guardar(); mostrar(); });
+  document.getElementById('otra').addEventListener('click', function () {
+    estado = { paso: 0, votos: {} }; recienEnviado = false; guardar();
+    document.getElementById('tally').setAttribute('src', 'about:blank'); mostrar();
+  });
   var visor = document.getElementById('visor'), vImg = document.getElementById('visor-img'), origen = null;
   function abrirVisor(q, desde) {
     var n = estado.paso;
