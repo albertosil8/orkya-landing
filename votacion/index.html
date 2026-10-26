@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta property="og:title" content="¿Qué diseño te gusta más?">
+<meta property="og:description" content="11 diseños. Dinos cuáles te gustan.">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>¿Qué diseño te gusta más?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+/* Plano: tres pantallas en una sola página (portada, un diseño cada vez, final).
+   El diseño en pantalla ocupa todo el centro; la votación va siempre a mano en una barra fija abajo.
+   La página es neutra a propósito para no favorecer ningún diseño. */
+:root {
+  --bg: #F2F3F5;
+  --surface: #FFFFFF;
+  --ink: #16181C;
+  --muted: #5B6170;
+  --line: #D9DCE2;
+  --accent: #B4235A;
+  --si: #1C7A4A;
+  --si-soft: #E2F3E9;
+  --medio: #8A6A12;
+  --medio-soft: #F6EFD9;
+  --no: #B3261E;
+  --no-soft: #F9E3E1;
+  --shade: rgba(22, 24, 28, 0.10);
+  --font: "Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121316; --surface: #1C1E23; --ink: #F1F2F4; --muted: #A4A9B4; --line: #30333A; --accent: #F0739F;
+    --si: #5FD39A; --si-soft: #173426; --medio: #E6C35C; --medio-soft: #3A3216; --no: #FF8A80; --no-soft: #3D1E1C;
+    --shade: rgba(0, 0, 0, 0.4);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121316; --surface: #1C1E23; --ink: #F1F2F4; --muted: #A4A9B4; --line: #30333A; --accent: #F0739F;
+  --si: #5FD39A; --si-soft: #173426; --medio: #E6C35C; --medio-soft: #3A3216; --no: #FF8A80; --no-soft: #3D1E1C;
+  --shade: rgba(0, 0, 0, 0.4);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.5; }
+.wrap { max-width: 1160px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.logo { display: block; height: 28px; aspect-ratio: 516 / 152; background-color: var(--ink);
+  -webkit-mask: url(img/logo.png) center / contain no-repeat; mask: url(img/logo.png) center / contain no-repeat; }
+.btn-grande { border: 0; border-radius: 999px; background: var(--ink); color: var(--bg); font-size: 19px; font-weight: 700; min-height: 60px; padding: 0 40px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 10px; }
+.btn-grande:hover { opacity: 0.9; }
+.btn-grande[disabled] { opacity: 0.35; cursor: not-allowed; }
+
+/* Portada */
+.inicio { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; justify-content: center; padding-block: 48px; }
+.inicio .wrap { display: grid; gap: 28px; justify-items: start; }
+.inicio h1 { margin: 0; font-size: clamp(44px, 9vw, 96px); line-height: 0.98; font-weight: 800; letter-spacing: -0.04em; text-wrap: balance; max-width: 12ch; }
+.inicio p { margin: 0; font-size: 18px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* Un diseño: ocupa justo la pantalla (cabecera, las dos imágenes enteras lado a lado y la votación), sin desplazarse */
+#s-diseno { height: 100%; display: flex; flex-direction: column; }
+.cab { flex: none; background: var(--bg); border-bottom: 1px solid var(--line); }
+.cab .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 10px 8px; }
+.cab h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.cab h1 span { color: var(--muted); font-weight: 600; }
+.barra-prog { height: 4px; background: var(--line); }
+.barra-prog i { display: block; height: 100%; background: var(--ink); width: 0; }
+.atras { border: 0; background: transparent; color: var(--muted); font-size: 15px; font-weight: 600; min-height: 44px; padding: 0 4px; }
+.atras:hover { color: var(--ink); }
+.pantallas { flex: 1; min-height: 0; width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto minmax(0, 1fr); gap: 6px 14px; padding-block: 8px 12px; }
+.pista { grid-column: 1 / -1; margin: 0; font-size: 13px; color: var(--muted); text-align: center; }
+.pantalla { margin: 0; min-height: 0; display: flex; flex-direction: column; gap: 6px; }
+.pantalla figcaption { flex: none; font-weight: 700; font-size: 15px; text-align: center; }
+.marco { position: relative; flex: 1; min-height: 0; width: 100%; border: 0; padding: 0; background: transparent; cursor: zoom-in; display: block; }
+.marco img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center top;
+  filter: drop-shadow(0 0 1px var(--muted)) drop-shadow(0 6px 14px var(--shade)); }
+
+.voto { flex: none; background: var(--surface); border-top: 1px solid var(--line); box-shadow: 0 -8px 28px var(--shade);
+  padding-top: 12px; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+
+.visor { position: fixed; inset: 0; z-index: 50; background: var(--bg); display: flex; flex-direction: column; }
+.visor-cab { flex: none; background: var(--surface); border-bottom: 1px solid var(--line); padding-top: calc(8px + env(safe-area-inset-top, 0px)); padding-bottom: 8px; }
+.visor-cab .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.visor-cab b { font-size: 17px; }
+.btn-cerrar { border: 1.5px solid var(--line); background: var(--surface); border-radius: 999px; min-height: 44px; padding: 0 20px; font-size: 15px; font-weight: 700; }
+.btn-cerrar:hover { border-color: var(--ink); }
+.visor-cuerpo { flex: 1; overflow: auto; -webkit-overflow-scrolling: touch; padding-block: 12px calc(12px + env(safe-area-inset-bottom, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.visor-cuerpo img { display: block; width: 100%; max-width: 1280px; height: auto; margin: 0 auto; border-radius: 6px; }
+.voto .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.voto-preg { flex: 1 1 100%; margin: 0; font-size: 15px; font-weight: 600; color: var(--muted); }
+.opciones { flex: 999 1 420px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.op { border: 2px solid var(--line); background: var(--surface); border-radius: 14px; min-height: 58px; padding: 6px 8px; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; text-align: center; line-height: 1.15; }
+.op svg { flex: none; }
+.op:hover { border-color: var(--ink); }
+.op.si[aria-pressed="true"] { border-color: var(--si); background: var(--si-soft); color: var(--si); }
+.op.medio[aria-pressed="true"] { border-color: var(--medio); background: var(--medio-soft); color: var(--medio); }
+.op.no[aria-pressed="true"] { border-color: var(--no); background: var(--no-soft); color: var(--no); }
+.voto .btn-grande { flex: 1 1 200px; min-height: 58px; }
+
+/* Final */
+.final { padding-block: 56px 72px; }
+.final .wrap { display: grid; gap: 24px; justify-items: start; max-width: 760px; }
+.final h1 { margin: 0; font-size: clamp(38px, 7vw, 64px); line-height: 1; font-weight: 800; letter-spacing: -0.035em; }
+.final p { margin: 0; font-size: 18px; color: var(--muted); max-width: 52ch; }
+.final p b { color: var(--ink); }
+.resumen { width: 100%; margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.resumen li { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 15px; font-variant-numeric: tabular-nums; }
+.resumen li b { font-weight: 700; white-space: nowrap; }
+.resumen .si { color: var(--si); font-weight: 700; }
+.resumen .medio { color: var(--medio); font-weight: 700; }
+.resumen .no { color: var(--no); font-weight: 700; }
+.nota { font-size: 15px !important; }
+.enlace { border: 0; background: transparent; color: var(--muted); font-size: 15px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; padding: 8px 0; min-height: 44px; }
+.enlace:hover { color: var(--ink); }
+@media (max-width: 560px) {
+  .op { flex-direction: column; gap: 2px; font-size: 14px; min-height: 56px; }
+  .voto .wrap { gap: 8px; }
+  .voto .btn-grande { min-height: 50px; font-size: 17px; }
+  .voto-preg { display: none; }
+  .cab h1 { font-size: 19px; }
+  .pantallas { gap: 4px 10px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .barra-prog i { transition: width .25s ease; }
+  .op { transition: border-color .12s, background-color .12s, color .12s; }
+}
+</style>
+</head>
+<body>
+<section class="inicio" id="s-inicio" aria-labelledby="t-inicio">
+  <div class="wrap">
+    <span class="logo" role="img" aria-label="Orkya"></span>
+    <h1 id="t-inicio">¿Qué diseño te gusta más?</h1>
+    <p>11 diseños</p>
+    <button class="btn-grande" type="button" id="empezar">Empezar</button>
+  </div>
+</section>
+
+<section id="s-diseno" hidden aria-labelledby="t-diseno">
+  <header class="cab">
+    <div class="wrap">
+      <h1 id="t-diseno">Diseño 1 <span>de 11</span></h1>
+      <button class="atras" type="button" id="atras">Atrás</button>
+    </div>
+    <div class="barra-prog" aria-hidden="true"><i id="prog"></i></div>
+  </header>
+  <div class="wrap pantallas">
+    <p class="pista">Toca una imagen para verla más grande</p>
+    <figure class="pantalla">
+      <figcaption>Portada</figcaption>
+      <button class="marco" type="button" id="marco-inicio" aria-label="Ver la portada más grande"><img id="img-inicio" src="" alt=""></button>
+    </figure>
+    <figure class="pantalla">
+      <figcaption>Resultados</figcaption>
+      <button class="marco" type="button" id="marco-resultados" aria-label="Ver los resultados más grandes"><img id="img-resultados" src="" alt=""></button>
+    </figure>
+  </div>
+  <div class="voto" role="group" aria-labelledby="voto-preg">
+    <div class="wrap">
+      <p class="voto-preg" id="voto-preg">¿Qué te parece este diseño?</p>
+      <div class="opciones">
+        <button type="button" class="op si" data-v="Me gusta" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 10v11H4V10zM7 10l4-7a2 2 0 0 1 3 2l-1 5h6a2 2 0 0 1 2 2.3l-1.3 7A2 2 0 0 1 17.7 21H7"/></svg>Me gusta</button>
+        <button type="button" class="op medio" data-v="Indiferente" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 15h8M9 9.5h.01M15 9.5h.01"/></svg>Indiferente</button>
+        <button type="button" class="op no" data-v="No me gusta" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 14V3h3v11zM17 14l-4 7a2 2 0 0 1-3-2l1-5H5a2 2 0 0 1-2-2.3l1.3-7A2 2 0 0 1 6.3 3H17"/></svg>No me gusta</button>
+      </div>
+      <button class="btn-grande" type="button" id="siguiente" disabled>Siguiente</button>
+    </div>
+  </div>
+</section>
+
+<section class="final" id="s-final" hidden aria-labelledby="t-final">
+  <div class="wrap">
+    <span class="logo" role="img" aria-label="Orkya"></span>
+    <h1 id="t-final">¡Ya está!</h1>
+    <p>Falta un paso para que cuenten tus votos: pulsa el botón. Se abrirá una página con tus votos y allí pulsas <b>Enviar mis votos</b>.</p>
+    <a class="btn-grande" id="enviar" href="https://tally.so/r/q55Do9" target="_blank" rel="noopener">Enviar mis votos</a>
+    <ul class="resumen" id="resumen" aria-label="Tus votos"></ul>
+    <button class="enlace" type="button" id="revisar">Cambiar algún voto</button>
+  </div>
+</section>
+
+<div class="visor" id="visor" hidden role="dialog" aria-modal="true" aria-labelledby="visor-tit">
+  <div class="visor-cab">
+    <div class="wrap"><b id="visor-tit">Diseño 1 · Portada</b><button class="btn-cerrar" type="button" id="cerrar">Cerrar</button></div>
+  </div>
+  <div class="visor-cuerpo"><img id="visor-img" src="" alt=""></div>
+</div>
+
+<script>
+(function () {
+  var N = 11;
+  var FORM = 'https://tally.so/r/q55Do9';
+  var CLAVE = 'orkya-votos-disenos';
+  var estado = { paso: 0, votos: {} };
+  try { var g = JSON.parse(localStorage.getItem(CLAVE) || 'null'); if (g && g.votos) estado = g; } catch (e) {}
+  function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(estado)); } catch (e) {} }
+  function dos(n) { return (n < 10 ? '0' : '') + n; }
+  function img(n, p) { return 'img/d' + dos(n) + '-' + p + '.jpg'; }
+
+  var sIni = document.getElementById('s-inicio'), sDis = document.getElementById('s-diseno'), sFin = document.getElementById('s-final');
+  var botones = Array.prototype.slice.call(document.querySelectorAll('.op'));
+  var sig = document.getElementById('siguiente');
+
+  function precargar(n) { if (n >= 1 && n <= N) { new Image().src = img(n, 'inicio'); new Image().src = img(n, 'resultados'); } }
+
+  function mostrar() {
+    var p = estado.paso;
+    sIni.hidden = p !== 0; sDis.hidden = !(p >= 1 && p <= N); sFin.hidden = p !== N + 1;
+    if (p >= 1 && p <= N) {
+      document.getElementById('t-diseno').innerHTML = 'Diseño ' + p + ' <span>de ' + N + '</span>';
+      document.getElementById('prog').style.width = ((p - 1) / N * 100) + '%';
+      ['inicio', 'resultados'].forEach(function (q) {
+        var im = document.getElementById('img-' + q);
+        im.src = img(p, q);
+        im.alt = 'Diseño ' + p + ': ' + (q === 'inicio' ? 'portada' : 'resultados de una búsqueda');
+      });
+      var v = estado.votos[p] || null;
+      botones.forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.v === v ? 'true' : 'false'); });
+      sig.disabled = !v;
+      sig.textContent = p === N ? 'Terminar' : 'Siguiente';
+      precargar(p + 1);
+    }
+    if (p === N + 1) pintarFinal();
+    window.scrollTo(0, 0);
+  }
+
+  function pintarFinal() {
+    var ul = document.getElementById('resumen'); ul.textContent = '';
+    var qs = [];
+    for (var n = 1; n <= N; n++) {
+      var v = estado.votos[n] || '';
+      var li = document.createElement('li');
+      var b = document.createElement('b'); b.textContent = 'Diseño ' + n;
+      var s = document.createElement('span'); s.textContent = v || 'Sin voto';
+      s.className = v === 'Me gusta' ? 'si' : v === 'Indiferente' ? 'medio' : v === 'No me gusta' ? 'no' : '';
+      li.appendChild(b); li.appendChild(s); ul.appendChild(li);
+      if (v) qs.push('d' + n + '=' + encodeURIComponent(v));
+    }
+    document.getElementById('enviar').href = FORM + (qs.length ? '?' + qs.join('&') : '');
+  }
+
+  document.getElementById('empezar').addEventListener('click', function () { estado.paso = 1; guardar(); mostrar(); });
+  botones.forEach(function (b) {
+    b.addEventListener('click', function () {
+      estado.votos[estado.paso] = b.dataset.v; guardar();
+      botones.forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      sig.disabled = false;
+    });
+  });
+  sig.addEventListener('click', function () { if (!estado.votos[estado.paso]) return; estado.paso += 1; guardar(); mostrar(); });
+  document.getElementById('atras').addEventListener('click', function () { estado.paso = Math.max(0, estado.paso - 1); guardar(); mostrar(); });
+  document.getElementById('revisar').addEventListener('click', function () { estado.paso = N; guardar(); mostrar(); });
+  var visor = document.getElementById('visor'), vImg = document.getElementById('visor-img'), origen = null;
+  function abrirVisor(q, desde) {
+    var n = estado.paso;
+    vImg.src = img(n, q);
+    vImg.alt = 'Diseño ' + n + ': ' + (q === 'inicio' ? 'portada' : 'resultados de una búsqueda');
+    document.getElementById('visor-tit').textContent = 'Diseño ' + n + ' · ' + (q === 'inicio' ? 'Portada' : 'Resultados');
+    visor.hidden = false; visor.querySelector('.visor-cuerpo').scrollTop = 0; origen = desde;
+    document.getElementById('cerrar').focus();
+  }
+  function cerrarVisor() { visor.hidden = true; vImg.src = ''; if (origen) { origen.focus(); origen = null; } }
+  ['inicio', 'resultados'].forEach(function (q) {
+    var m = document.getElementById('marco-' + q);
+    m.addEventListener('click', function () { abrirVisor(q, m); });
+  });
+  document.getElementById('cerrar').addEventListener('click', cerrarVisor);
+  visor.addEventListener('keydown', function (e) { if (e.key === 'Escape') { e.preventDefault(); cerrarVisor(); } });
+
+  if (!(estado.paso >= 0 && estado.paso <= N + 1)) estado.paso = 0;
+  mostrar();
+  precargar(1);
+})();
+</script>
+</body>
+</html>
